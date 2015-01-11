@@ -2,8 +2,10 @@ var express = require('express');
 var path = require('path');
 var logger = require('morgan');
 var bodyParser = require('body-parser');
+var JobRoutes = require('./classes/route/JobRoutes');
+var ServiceBag = require('./classes/service/ServiceBag');
 
-var job = require('./routes/job');
+var services = new ServiceBag();
 
 var app = express();
 
@@ -12,7 +14,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/job', job);
+app.use('/job', new JobRoutes(services).getRouter());
 
 // catch 404 and continue to error handler
 app.use(function(req, res, next) {

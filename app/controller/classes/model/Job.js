@@ -1,4 +1,4 @@
-var UrlInputReader = require('./UrlInputReader');
+var UrlInputReader = require('../helper/UrlInputReader');
 
 var Job = function(
     id,
