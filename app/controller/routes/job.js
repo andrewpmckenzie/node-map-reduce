@@ -5,17 +5,17 @@ var Job = require('../classes/Job');
 
 var jobRegistry = new JobRegistry();
 
-// TODO: make POST
-/* GET create new job */
-router.get('/new', function(req, res) {
+/* POST create new job */
+router.post('/new', function(req, res) {
   // TODO: verify required params are provided
   var inputPath = req.param('inputPath');
   var reduceFunction = req.param('reduceFunction');
   var mapFunction = req.param('mapFunction');
   var chunkDelimiter = req.param('chunkDelimiter');
   var id = jobRegistry.getUniqueId();
+  var jobUrl = req.protocol + '://' + req.get('host') + '/job/' + id;
 
-  var job = new Job(id, inputPath, reduceFunction, mapFunction, chunkDelimiter);
+  var job = new Job(id, inputPath, reduceFunction, mapFunction, chunkDelimiter, jobUrl);
   jobRegistry.addJob(job);
 
   res.status(200).json(job.toJson());

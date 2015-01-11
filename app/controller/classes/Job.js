@@ -3,13 +3,15 @@ var Job = function(
     inputPath,
     reduceFunction,
     mapFunction,
-    chunkDelimiter
+    chunkDelimiter,
+    url
 ) {
   this.id_ = id  || (function() { throw new Error('id not provided'); })();
   this.inputPath_ = inputPath || (function() { throw new Error('inputPath not provided'); })();
   this.reduceFunction_ = reduceFunction || (function() { throw new Error('reduceFunction not provided'); })();
   this.mapFunction_ = mapFunction || (function() { throw new Error('mapFunction not provided'); })();
   this.chunkDelimiter_ = chunkDelimiter || '\n';
+  this.url_ = url;
   this.status_ = Job.Status.STARTING;
 };
 
@@ -20,6 +22,7 @@ Job.prototype = {
     return {
       id: this.id_,
       status: this.status_,
+      url: this.url_,
       options: {
         inputPath: this.inputPath_,
         reduceFunction: this.reduceFunction_,
