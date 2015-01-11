@@ -30,7 +30,6 @@ ControllerApp.prototype = {
     this.express_.use(logger('dev'));
     this.express_.use(bodyParser.json());
     this.express_.use(bodyParser.urlencoded({ extended: false }));
-    this.express_.use(express.static(path.join(__dirname, 'public')));
     this.express_.set('port', this.port_);
   },
 

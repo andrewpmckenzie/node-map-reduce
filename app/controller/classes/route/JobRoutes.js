@@ -5,8 +5,8 @@ var JobRoutes = function(services) {
   this.services_ = services;
   this.router_ = express.Router();
 
+  this.router_.get('/', this.listRoute_.bind(this));
   this.router_.post('/new', this.newJobRoute_.bind(this));
-  this.router_.get('/list', this.listRoute_.bind(this));
   this.router_.get('/:jobId', this.detailRoute_.bind(this));
 };
 
