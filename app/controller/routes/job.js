@@ -8,8 +8,16 @@ var jobRegistry = new JobRegistry();
 // TODO: make POST
 /* GET create new job */
 router.get('/new', function(req, res) {
-  var job = new Job(jobRegistry.getUniqueId());
+  // TODO: verify required params are provided
+  var inputPath = req.param('inputPath');
+  var reduceFunction = req.param('reduceFunction');
+  var mapFunction = req.param('mapFunction');
+  var chunkDelimiter = req.param('chunkDelimiter');
+  var id = jobRegistry.getUniqueId();
+
+  var job = new Job(id, inputPath, reduceFunction, mapFunction, chunkDelimiter);
   jobRegistry.addJob(job);
+
   res.status(200).json(job.toJson());
 });
 

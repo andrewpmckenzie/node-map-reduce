@@ -1,7 +1,7 @@
 var JobRegistry = function() {
   this.jobs_ = {};
   this.deletedJobs_ = {};
-  this.lastId_ = 0;
+  this.lastId_ = 1;
 };
 
 JobRegistry.prototype = {

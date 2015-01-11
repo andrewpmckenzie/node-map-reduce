@@ -1,6 +1,16 @@
-var Job = function(id) {
-  this.id_ = id;
-  this.status_ = Job.Status.RUNNING;
+var Job = function(
+    id,
+    inputPath,
+    reduceFunction,
+    mapFunction,
+    chunkDelimiter
+) {
+  this.id_ = id  || (function() { throw new Error('id not provided'); })();
+  this.inputPath_ = inputPath || (function() { throw new Error('inputPath not provided'); })();
+  this.reduceFunction_ = reduceFunction || (function() { throw new Error('reduceFunction not provided'); })();
+  this.mapFunction_ = mapFunction || (function() { throw new Error('mapFunction not provided'); })();
+  this.chunkDelimiter_ = chunkDelimiter || '\n';
+  this.status_ = Job.Status.STARTING;
 };
 
 Job.prototype = {
@@ -9,7 +19,13 @@ Job.prototype = {
   toJson: function() {
     return {
       id: this.id_,
-      status: this.status_
+      status: this.status_,
+      options: {
+        inputPath: this.inputPath_,
+        reduceFunction: this.reduceFunction_,
+        mapFunction: this.mapFunction_,
+        chunkDelimiter: this.chunkDelimiter_
+      }
     };
   }
 };
