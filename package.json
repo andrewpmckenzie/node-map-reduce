@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start-controller": "node ./app/controller/bin/controller"
+    "start-controller": "grunt controller:start"
   },
   "dependencies": {
     "body-parser": "~1.10.1",
