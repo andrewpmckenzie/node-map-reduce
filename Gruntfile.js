@@ -1,3 +1,3 @@
 module.exports = function(grunt) {
-  grunt.loadTasks('tasks');
+  grunt.loadTasks('app/controller/tasks');
 };

@@ -6,7 +6,7 @@ module.exports = function(grunt) {
     express: {
       controllerServer: {
         options: {
-          script: 'app/controller/bin/controller',
+          script: 'app/controller/bin/server.js',
           node_env: grunt.option('env') || 'development',
           port: grunt.option('port') || 0
         }
