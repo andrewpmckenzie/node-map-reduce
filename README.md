@@ -1,2 +1,5 @@
-# jsmapreduce
-A simple mapreducer (like hadoop) for nodejs.
+# node-map-reduce
+
+Work in progress.
+
+The plan is to create a simple distributed map reduce system using node + javascript.
