@@ -20,7 +20,7 @@ module.exports = function(grunt) {
       },
 
       controllerServerDev: {
-        files: [ 'app/controller/**/*' ],
+        files: [ 'app/controller/**/*', 'app/common/**/*' ],
         tasks: [ 'express:controllerServer' ]
       }
     }

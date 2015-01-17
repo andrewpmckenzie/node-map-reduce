@@ -23,7 +23,7 @@ module.exports = function(grunt) {
       },
 
       mapperServerDev: {
-        files: [ 'app/mapper/**/*' ],
+        files: [ 'app/mapper/**/*', 'app/common/**/*' ],
         tasks: [ 'express:mapperServer' ]
       }
     }
