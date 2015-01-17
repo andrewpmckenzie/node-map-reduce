@@ -1,3 +1,5 @@
+var log = require('debug')('node-map-reduce:controller:JobRegistry');
+
 var JobRegistry = function() {
   this.jobs_ = {};
   this.deletedJobs_ = {};
@@ -6,6 +8,8 @@ var JobRegistry = function() {
 
 JobRegistry.prototype = {
   addJob: function(job) {
+    log('addJob(' + job.id() + ') called.');
+
     var jobId = '' + job.id();
     if (jobId in this.jobs_) {
       throw new Error('Job already registered: ' + id);
@@ -15,10 +19,17 @@ JobRegistry.prototype = {
   },
 
   getJob: function(jobId) {
-    return this.jobs_[jobId];
+    log('getJob(' + job.id() + ') called.');
+
+    var job = this.jobs_[jobId];
+
+    log('getJob(' + job.id() + ') returned ' + JSON.stringify(job) + '.');
+    return job;
   },
 
   deleteJob: function(jobId) {
+    log('deleteJob(' + job.id() + ') called.');
+
     delete this.jobs_[jobId];
     this.deletedJobs_[jobId] = true;
   },

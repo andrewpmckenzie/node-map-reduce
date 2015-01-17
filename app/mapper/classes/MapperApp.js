@@ -3,12 +3,15 @@ var path = require('path');
 var logger = require('morgan');
 var bodyParser = require('body-parser');
 var http = require('http');
+var log = require('debug')('node-map-reduce:mapper:MapperApp');
 
 var JobRoutes = require('./route/JobRoutes');
 var ControllerRoutes = require('./route/ControllerRoutes');
 var ServiceBag = require('./service/ServiceBag');
 
 var MapperApp = function(port) {
+  log('MapperApp(' + port + ') called.');
+
   this.port_ = port;
   this.express_ = express();
   this.services_ = new ServiceBag();
@@ -29,6 +32,8 @@ MapperApp.prototype = {
   },
 
   discover: function(controllerUrl) {
+    log('Discover(' + controllerUrl + ') called.');
+
     var address = this.server_.address();
     var selfUrl = 'http://' + address.address + ':' + address.port; // TODO: there must be a better way to do this
     this.services_.controllerActions.register(controllerUrl, selfUrl);
@@ -73,7 +78,7 @@ MapperApp.prototype = {
   },
 
   handleServerStart_: function() {
-    console.log('Listening on port ' + this.server_.address().port);
+    log('Server started on port ' + this.server_.address().port + '.');
   },
 
   handleFatalError_: function(error) {

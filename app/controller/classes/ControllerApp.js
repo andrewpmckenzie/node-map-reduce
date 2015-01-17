@@ -3,11 +3,13 @@ var path = require('path');
 var logger = require('morgan');
 var bodyParser = require('body-parser');
 var http = require('http');
+var log = require('debug')('node-map-reduce:controller:ControllerApp');
 
 var JobRoutes = require('./route/JobRoutes');
 var ServiceBag = require('./service/ServiceBag');
 
 var ControllerApp = function(port) {
+  log('ControllerApp(' + port + ') called.');
   this.port_ = port;
   this.services_ = new ServiceBag();
   this.express_ = express();
@@ -63,7 +65,7 @@ ControllerApp.prototype = {
   },
 
   handleServerStart_: function() {
-    console.log('Listening on port ' + this.server_.address().port);
+    log('Server started on port ' + this.server_.address().port + '.');
   },
 
   handleFatalError_: function(error) {
