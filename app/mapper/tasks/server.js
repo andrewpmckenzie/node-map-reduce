@@ -8,7 +8,10 @@ module.exports = function(grunt) {
         options: {
           script: 'app/mapper/bin/server.js',
           node_env: grunt.option('env') || 'development',
-          port: grunt.option('port') || 0
+          port: grunt.option('port') || 0,
+          args: [
+            grunt.option('controller') || null
+          ]
         }
       }
     },

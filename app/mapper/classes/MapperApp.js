@@ -25,6 +25,14 @@ MapperApp.prototype = {
 
   start: function() {
     this.server_.listen(this.port_);
+    return this;
+  },
+
+  discover: function(controllerUrl) {
+    var address = this.server_.address();
+    var selfUrl = 'http://' + address.address + ':' + address.port; // TODO: there must be a better way to do this
+    this.services_.controllerActions.register(controllerUrl, selfUrl);
+    return this;
   },
 
   configureExpress_: function() {
