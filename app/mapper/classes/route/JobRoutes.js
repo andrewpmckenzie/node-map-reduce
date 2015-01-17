@@ -30,17 +30,17 @@ JobRoutes.prototype = {
   },
 
   listRoute_: function(req, res) {
-    var jobs = this.services_.jobRegistry.getAllJobIds();
+    var jobs = this.services_.jobRegistry.getAllIds();
     res.status(200).json(jobs);
   },
 
   detailRoute_: function(req, res) {
     var jobId = req.params.jobId;
-    var job = this.services_.jobRegistry.getJob(jobId);
+    var job = this.services_.jobRegistry.get(jobId);
 
     if (job) {
       res.status(200).json(job.toJson());
-    } else if (this.services_.jobRegistry.isDeleted(jobId)) {
+    } else if (this.services_.jobRegistry.isRemoved(jobId)) {
       res.status(410).send('Job was removed.');
     } else {
       res.status(404).send('Job does not exist.');
@@ -49,8 +49,8 @@ JobRoutes.prototype = {
 
   deleteJobRoute_: function(req, res) {
     var jobId = req.params.jobId;
-    var job = this.services_.jobRegistry.getJob(jobId);
-    this.services_.jobRegistry.deleteJob(jobId);
+    var job = this.services_.jobRegistry.get(jobId);
+    this.services_.jobRegistry.remove(jobId);
 
     res.status(200).json(job.toJson());
   }
