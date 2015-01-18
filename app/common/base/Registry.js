@@ -42,7 +42,11 @@ var Registry = Class.extend({
 
   getUniqueId: function() { return this.lastId_++; },
 
-  getAllIds: function() { return Object.keys(this.items_); }
+  getAllIds: function() { return Object.keys(this.items_); },
+
+  getAll: function() {
+    return Object.keys(this.items_).map(function(key) { return this.items_[key]; }.bind(this));
+  }
 });
 
 module.exports = Registry;
