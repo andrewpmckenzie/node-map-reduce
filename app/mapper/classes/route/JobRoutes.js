@@ -18,13 +18,12 @@ JobRoutes.prototype = {
 
   registerJobRoute_: function(req, res) {
     // TODO: verify required params are provided
-    var jogId = req.params.jobId;
+    var jobId = req.params.jobId;
     var jobUrl = req.param('jobUrl');
     var mapFunction = req.param('mapFunction');
 
-    var job = new Job(id, mapFunction, jobUrl);
-    this.services_.jobRegistry.addJob(job);
-    job.start();
+    var job = new Job(jobId, mapFunction, jobUrl);
+    this.services_.jobRegistry.add(job);
 
     res.status(200).json(job.toJson());
   },

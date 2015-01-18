@@ -1,3 +1,4 @@
+var log = require('debug')('node-map-reduce:controller:Job');
 var UrlInputReader = require('../helper/UrlInputReader');
 
 var Job = function(
@@ -6,13 +7,15 @@ var Job = function(
     reduceFunction,
     mapFunction,
     chunkDelimiter,
-    url
+    url,
+    mappers
 ) {
   this.id_ = id  || (function() { throw new Error('id not provided'); })();
   this.inputUrl_ = inputUrl || (function() { throw new Error('inputUrl not provided'); })();
   this.reduceFunction_ = reduceFunction || (function() { throw new Error('reduceFunction not provided'); })();
   this.mapFunction_ = mapFunction || (function() { throw new Error('mapFunction not provided'); })();
   this.url_ = url || (function() { throw new Error('url not provided'); })();
+  this.mappers_ = mappers || (function() { throw new Error('mappers not provided'); })();
   this.chunkDelimiter_ = chunkDelimiter || '\n';
 
   this.error_ = undefined;
@@ -22,6 +25,10 @@ var Job = function(
   this.inputReader_.onChunks(this.handleChunks_.bind(this));
   this.inputReader_.onDone(this.handleReadDone_.bind(this));
   this.inputReader_.onError(this.handleReadError_.bind(this));
+
+  if (this.mappers_.length === 0) {
+    this.setError_('No mappers available.');
+  }
 };
 
 Job.prototype = {
@@ -45,6 +52,61 @@ Job.prototype = {
   },
 
   start: function() {
+    this.registerJobWithNodes_(
+      this.startInputStream_.bind(this)
+    );
+  },
+
+  registerJobWithNodes_: function(onDone) {
+    log('registerJobWithNodes_() called.');
+    var repliesRemaining = this.mappers_.length;
+
+    if (this.error_) {
+      log('Stopping as Job is in error state');
+      return;
+    }
+
+    var maybeDone = function() {
+      if (repliesRemaining === 0) {
+        log('Registered job with ' + this.mappers_.length + ' mappers.');
+        if (this.mappers_.length === 0) {
+          this.setError_('Could not register with mappers.');
+        }
+        onDone();
+      }
+    }.bind(this);
+
+    var registrationSuccess = function(mapperId) {
+      repliesRemaining--;
+      maybeDone();
+    };
+
+    var registrationError = function(mapperId) {
+      log('Error registering with mapper ' + mapperId);
+      repliesRemaining--;
+      this.mappers_ = this.mappers_.filter(function(mapper) { return mapperId !== mapper.id(); });
+      maybeDone();
+    };
+
+    this.mappers_.forEach(function(mapper) {
+      mapper.client().registerJob(
+        this.id_,
+        this.url_,
+        this.mapFunction_,
+        registrationSuccess.bind(this, mapper.id()),
+        registrationError.bind(this, mapper.id())
+      )
+    }.bind(this));
+  },
+
+  startInputStream_: function() {
+    log('startInputStream_() called.');
+
+    if (this.error_) {
+      log('Stopping as Job is in error state');
+      return;
+    }
+
     this.inputReader_.read();
     this.status_ = Job.Status.RUNNING;
   },
@@ -61,7 +123,11 @@ Job.prototype = {
   },
 
   handleReadError_: function(message) {
-    console.log('GOT READ ERROR: ' + message);
+    this.setError_(message);
+  },
+
+  setError_: function(message) {
+    log('ERROR with job ' + this.id_ + ': ' + message);
     this.status_ = Job.Status.ERROR;
     this.error_ = message;
   }

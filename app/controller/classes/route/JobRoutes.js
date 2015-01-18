@@ -24,7 +24,18 @@ JobRoutes.prototype = {
     var id = this.services_.jobRegistry.getUniqueId();
     var jobUrl = req.protocol + '://' + req.get('host') + '/job/' + id;
 
-    var job = new Job(id, inputUrl, reduceFunction, mapFunction, chunkDelimiter, jobUrl);
+    // TODO: throttle mappers passed
+    var mappers = this.services_.mapperRegistry.getAll();
+
+    var job = new Job(
+        id,
+        inputUrl,
+        reduceFunction,
+        mapFunction,
+        chunkDelimiter,
+        jobUrl,
+        mappers
+    );
     this.services_.jobRegistry.add(job);
     job.start();
 
