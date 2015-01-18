@@ -8,7 +8,6 @@ var Client = Class.extend({
   },
 
   request_: function(method, path, data, onSuccess, onError) {
-    log(method + ' request to ' + path);
     data = data || data;
     onSuccess = onSuccess || function() {};
     onError = onError || function() {};
@@ -22,15 +21,16 @@ var Client = Class.extend({
 
     options[method === 'GET' ? 'qs' : 'form'] = data;
 
+    log(method + ' request to ' + url);
     request(options, function(err, response, body) {
       var isError = err || /^[^2]/.test('' + response.statusCode);
       if (isError) {
-        log('ERROR response from ' + path + ': ' + JSON.stringify(response));
+        log('ERROR response from ' + url + ': ' + JSON.stringify(response));
         if (onError) {
           onError(err || response.body);
         }
       } else {
-        log('SUCCESS response from ' + path + '.');
+        log('SUCCESS response from ' + url + '.');
         onSuccess(body);
       }
     });

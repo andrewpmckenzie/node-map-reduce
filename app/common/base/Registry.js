@@ -30,7 +30,7 @@ var Registry = Class.extend({
   },
 
   remove: function(itemId) {
-    log('deleteItem(' + itemId() + ') called.');
+    log('deleteItem(' + itemId + ') called.');
 
     delete this.items_[itemId];
     this.deletedItems_[itemId] = true;

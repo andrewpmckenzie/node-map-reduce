@@ -130,6 +130,11 @@ Job.prototype = {
     log('ERROR with job ' + this.id_ + ': ' + message);
     this.status_ = Job.Status.ERROR;
     this.error_ = message;
+    this.tidyup_();
+  },
+
+  tidyup_: function() {
+    this.mappers_.forEach(function(mapper) { mapper.client().deleteJob(this.id_); }.bind(this));
   }
 
 };
