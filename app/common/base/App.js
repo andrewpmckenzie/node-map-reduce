@@ -54,6 +54,7 @@ var App = Class.extend({
   },
 
   handleDevError_: function(err, req, res, next) {
+    log(err);
     res.status(err.status || 500).json({
       message: err.message,
       error: err

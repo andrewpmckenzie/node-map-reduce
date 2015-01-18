@@ -1,16 +1,12 @@
-var Client = require('./Client');
+var util = require('util');
+var Client = require('../../../common/base/Client');
 
-var ControllerClient = function(baseUrl) {
-  this.baseUrl_ = baseUrl;
-  this.client_ = new Client(baseUrl);
-};
-
-ControllerClient.prototype = {
+var ControllerClient = Client.extend({
   register: function(selfUrl, onSuccess, onError) {
-    this.client_.post('/mapper/register', {
+    this.post('/mapper/register', {
       url: selfUrl
     }, onSuccess, onError);
   }
-};
+});
 
 module.exports = ControllerClient;

@@ -1,11 +1,14 @@
 var request = require('request');
+var log = require('debug')('node-map-reduce:common:Client');
+var Class = require('base-class-extend');
 
-var Client = function(baseUrl) {
-  this.baseUrl_ = baseUrl;
-};
+var Client = Class.extend({
+  constructor: function(baseUrl) {
+    this.baseUrl_ = baseUrl;
+  },
 
-Client.prototype = {
   request_: function(method, path, data, onSuccess, onError) {
+    log(method + ' request to ' + path);
     data = data || data;
     onSuccess = onSuccess || function() {};
     onError = onError || function() {};
@@ -37,6 +40,6 @@ Client.prototype = {
   post: function(path, data, onSuccess, onError) {
     this.request_('POST', path, data, onSuccess, onError);
   }
-};
+});
 
 module.exports = Client;
