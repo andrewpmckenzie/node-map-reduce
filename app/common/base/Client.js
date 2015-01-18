@@ -23,11 +23,14 @@ var Client = Class.extend({
     options[method === 'GET' ? 'qs' : 'form'] = data;
 
     request(options, function(err, response, body) {
-      if (err) {
+      var isError = err || /^[^2]/.test('' + response.statusCode);
+      if (isError) {
+        log('ERROR response from ' + path + ': ' + JSON.stringify(response));
         if (onError) {
-          onError(err);
+          onError(err || response.body);
         }
       } else {
+        log('SUCCESS response from ' + path + '.');
         onSuccess(body);
       }
     });
