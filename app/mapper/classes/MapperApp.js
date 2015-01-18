@@ -1,5 +1,5 @@
 var util = require("util");
-var log = require('debug')('node-map-reduce:controller:MapperApp');
+var log = require('debug')('node-map-reduce:mapper:MapperApp');
 
 var App = require('../../common/base/App');
 var JobRoutes = require('./route/JobRoutes');

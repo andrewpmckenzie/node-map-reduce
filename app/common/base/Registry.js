@@ -25,7 +25,7 @@ var Registry = Class.extend({
 
     var item = this.items_[itemId];
 
-    log('getItem(' + itemId + ') returned ' + JSON.stringify(item) + '.');
+    log('getItem(%s) returned %s.', itemId, item ? ' an item' : 'nothing');
     return item;
   },
 
@@ -43,6 +43,8 @@ var Registry = Class.extend({
   getUniqueId: function() { return this.lastId_++; },
 
   getAllIds: function() { return Object.keys(this.items_); },
+
+  numberOfItems: function() { return this.getAllIds().length; },
 
   getAll: function() {
     return Object.keys(this.items_).map(function(key) { return this.items_[key]; }.bind(this));

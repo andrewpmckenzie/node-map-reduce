@@ -5,6 +5,7 @@ hash serve 2>/dev/null || { echo >&2 "serve is not installed. You can install wi
 
 NAME=node-map-reduce
 export DEBUG=node-map-reduce:*
+export DEBUG_COLORS=true
 
 tmux kill-session -t $NAME
 

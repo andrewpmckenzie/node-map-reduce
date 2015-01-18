@@ -25,7 +25,7 @@ var Client = Class.extend({
     request(options, function(err, response, body) {
       var isError = err || /^[^2]/.test('' + response.statusCode);
       if (isError) {
-        log('ERROR response from ' + url + ': ' + JSON.stringify(response));
+        log('ERROR response from %s: %s', url, (err ? err : JSON.stringify(response)));
         if (onError) {
           onError(err || response.body);
         }
