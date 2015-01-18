@@ -8,6 +8,7 @@ var JobRoutes = function(services) {
   this.router_.get('/', this.listRoute_.bind(this));
   this.router_.post('/new', this.newJobRoute_.bind(this));
   this.router_.get('/:jobId', this.detailRoute_.bind(this));
+  this.router_.post('/:jobId/chunk/:chunkId/map-complete', this.chunkMapCompleteRoute_.bind(this));
 };
 
 JobRoutes.prototype = {
@@ -52,6 +53,21 @@ JobRoutes.prototype = {
     var job = this.services_.jobRegistry.get(jobId);
 
     if (job) {
+      res.status(200).json(job.toJson());
+    } else if (this.services_.jobRegistry.isRemoved(jobId)) {
+      res.status(410).send('Job was removed.');
+    } else {
+      res.status(404).send('Job does not exist.');
+    }
+  },
+
+  chunkMapCompleteRoute_: function(req, res) {
+    var jobId = req.params.jobId;
+    var chunkId = req.params.chunkId;
+    var job = this.services_.jobRegistry.get(jobId);
+
+    if (job) {
+      job.mapComplete(chunkId);
       res.status(200).json(job.toJson());
     } else if (this.services_.jobRegistry.isRemoved(jobId)) {
       res.status(410).send('Job was removed.');

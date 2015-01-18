@@ -1,5 +1,7 @@
 var log = require('debug')('node-map-reduce:controller:Job');
 var UrlInputReader = require('../helper/UrlInputReader');
+var ChunkRegistry = require('../helper/ChunkRegistry');
+var Chunk = require('./Chunk');
 
 var Job = function(
     id,
@@ -17,7 +19,11 @@ var Job = function(
   this.url_ = url || (function() { throw new Error('url not provided'); })();
   this.mappers_ = mappers || (function() { throw new Error('mappers not provided'); })();
   this.chunkDelimiter_ = chunkDelimiter || '\n';
+  this.inputFinished_ = false;
 
+  this.chunkRegistry_ = new ChunkRegistry();
+
+  this.rawChunkQueue_ = [];
   this.error_ = undefined;
 
   this.status_ = Job.Status.STARTING;
@@ -112,9 +118,87 @@ Job.prototype = {
   },
 
   handleChunks_: function(chunks) {
-    chunks.forEach(function(chunk) {
-      console.log('GOT CHUNK: ' + chunk.length);
-    });
+    if (this.status_ !== Job.Status.RUNNING) {
+      throw new Error('Chunks received while job in ' + this.status_ + ' state.');
+    }
+
+    chunks.forEach(function(rawChunk) {
+      this.maybeSendChunkToMapper_(rawChunk);
+    }.bind(this));
+  },
+
+  maybeSendChunkToMapper_: function(rawChunk) {
+    if (this.status_ !== Job.Status.RUNNING) {
+      throw new Error('Trying to send chunk while job in ' + this.status_ + ' state.');
+    }
+
+    var availableMapper = this.nextAvailableMapper_();
+
+    if (typeof rawChunk !== 'string') {
+      log('Ignoring bad chunk: ' + rawChunk);
+    } else if (availableMapper) {
+      var chunk = new Chunk(
+        this.chunkRegistry_.getUniqueId(),
+        rawChunk
+      );
+      chunk.setMapping(availableMapper);
+      this.chunkRegistry_.add(chunk);
+
+      log('Sending chunk [%s] to mapper [%s]: %s', chunk.id(), availableMapper.id(), rawChunk);
+      availableMapper.process(this.id_, chunk.id(), rawChunk);
+      return true;
+    } else {
+      log('No mappers available. Pausing stream.');
+      this.rawChunkQueue_.push(rawChunk);
+      this.inputReader_.pause();
+      return false;
+    }
+
+  },
+
+  maybeResumeRead_: function() {
+    while (this.maybeSendChunkToMapper_(this.rawChunkQueue_.pop())) {
+      // no-op
+    }
+    if (this.rawChunkQueue_.length === 0) {
+      log('No chunks left in local queue. Resuming stream.');
+      this.inputReader_.resume();
+    }
+  },
+
+  nextAvailableMapper_: function() {
+    // TODO: be smarter about tracking mapper availability
+    return this.mappers_.filter(function(mapper) { return mapper.isAvailable(); })[0];
+  },
+
+  mapComplete: function(chunkId) {
+    var chunk = this.chunkRegistry_.get(chunkId);
+
+    if (!chunk) {
+      throw new Error('Chunk not found: ' + chunkId);
+    }
+
+    if (this.status_ !== Job.Status.RUNNING) {
+      throw new Error('Mapper reported completion of chunk [' + chunkId + '] while job in ' + this.status_ + ' state.');
+    }
+
+    log('Mapping of chunk [%s] complete. Memory state: [%s/%s]', chunkId, process.memoryUsage().heapUsed, process.memoryUsage().heapTotal);
+
+    // TODO: change these lines to reflect reducing state once we have reducers
+    chunk.setDone();
+    this.chunkRegistry_.tidy();
+
+    if (this.inputFinished_ && !this.rawChunkQueue_.length) {
+      var chunksProcessing = this.chunkRegistry_.numberOfItems();
+      if (chunksProcessing > 0) {
+        log('Almost done. Waiting on %s chunks to finish.', chunksProcessing);
+      } else {
+        log('Nothing left to do!');
+        this.setCompleted_();
+      }
+    } else {
+      this.maybeResumeRead_();
+    }
   },
 
   handleReadDone_: function() {

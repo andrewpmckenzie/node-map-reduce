@@ -23,6 +23,11 @@ Mapper.prototype = {
     }
   },
 
+  process: function(jobId, chunkId, rawChunk) {
+    this.isAvailable_ = false;
+    this.client_.process.apply(this.client_, arguments);
+  },
+
   deleteJob: function(jobId) {
     this.client_.deleteJob.apply(this.client_, arguments);
   },
