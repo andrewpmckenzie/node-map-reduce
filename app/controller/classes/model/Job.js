@@ -118,8 +118,12 @@ Job.prototype = {
   },
 
   handleReadDone_: function() {
-    console.log('GOT READ DONE');
+    this.inputFinished_ = true;
+  },
+
+  setCompleted_: function() {
     this.status_ = Job.Status.COMPLETED;
+    log('Completed job [%s]', this.id_);
   },
 
   handleReadError_: function(message) {
