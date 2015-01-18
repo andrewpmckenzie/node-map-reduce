@@ -4,22 +4,23 @@ var logger = require('morgan');
 var bodyParser = require('body-parser');
 var http = require('http');
 var log = require('debug')('node-map-reduce:common:App');
+var Class = require('base-class-extend');
 
-var App = function(port) {
-  log('App(' + port + ') called.');
-  this.port_ = port;
-  this.express_ = express();
+var App = Class.extend({
+  constructor: function (port) {
+    log('App(' + port + ') called.');
+    this.port_ = port;
+    this.express_ = express();
 
-  this.configureExpress_();
-  this.configureStandardRoutes_(this.express_);
-  this.configureGenericRoutes_();
+    this.configureExpress_();
+    this.configureStandardRoutes_(this.express_);
+    this.configureGenericRoutes_();
 
-  this.server_ = http.createServer(this.express_);
-  this.server_.on('error', this.handleFatalError_.bind(this));
-  this.server_.on('listening', this.handleServerStart_.bind(this));
-};
+    this.server_ = http.createServer(this.express_);
+    this.server_.on('error', this.handleFatalError_.bind(this));
+    this.server_.on('listening', this.handleServerStart_.bind(this));
+  },
 
-App.prototype = {
   configureStandardRoutes_: function(express) {
     throw new Error('configureStandardRoutes_ is an abstract function')
   },
@@ -85,6 +86,6 @@ App.prototype = {
         throw error;
     }
   }
-};
+});
 
 module.exports = App;

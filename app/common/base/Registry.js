@@ -1,12 +1,13 @@
 var log = require('debug')('node-map-reduce:common:Registry');
+var Class = require('base-class-extend');
 
-var Registry = function() {
-  this.items_ = {};
-  this.deletedItems_ = {};
-  this.lastId_ = 1;
-};
+var Registry = Class.extend({
+  constructor: function() {
+    this.items_ = {};
+    this.deletedItems_ = {};
+    this.lastId_ = 1;
+  },
 
-Registry.prototype = {
   add: function(item) {
     log('addItem(' + item.id() + ') called.');
 
@@ -20,7 +21,7 @@ Registry.prototype = {
   },
 
   get: function(itemId) {
-    log('getItem(' + item.id() + ') called.');
+    log('getItem(' + itemId + ') called.');
 
     var item = this.items_[itemId];
 
@@ -29,7 +30,7 @@ Registry.prototype = {
   },
 
   remove: function(itemId) {
-    log('deleteItem(' + item.id() + ') called.');
+    log('deleteItem(' + itemId() + ') called.');
 
     delete this.items_[itemId];
     this.deletedItems_[itemId] = true;
@@ -42,6 +43,6 @@ Registry.prototype = {
   getUniqueId: function() { return this.lastId_++; },
 
   getAllIds: function() { return Object.keys(this.items_); }
-};
+});
 
 module.exports = Registry;

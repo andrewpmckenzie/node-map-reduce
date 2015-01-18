@@ -3,8 +3,8 @@ var log = require('debug')('node-map-reduce:mapper:JobRegistry');
 
 var Registry = require('../../../common/base/Registry');
 
-var JobRegistry = function() { };
+var JobRegistry = Registry.extend({
 
-util.inherits(JobRegistry, Registry);
+});
 
 module.exports = JobRegistry;
