@@ -3,6 +3,7 @@ var log = require('debug')('node-map-reduce:controller:ControllerApp');
 
 var App = require('../../common/base/App');
 var JobRoutes = require('./route/JobRoutes');
+var MapperRoutes = require('./route/MapperRoutes');
 var ServiceBag = require('./service/ServiceBag');
 
 var ControllerApp = App.extend({
@@ -15,6 +16,7 @@ var ControllerApp = App.extend({
 
   configureStandardRoutes_: function(express) {
     express.use('/job', new JobRoutes(this.services_).getRouter());
+    express.use('/mapper', new MapperRoutes(this.services_).getRouter());
   }
 });
 
