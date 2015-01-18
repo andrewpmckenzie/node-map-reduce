@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start-controller": "grunt controller:start"
+    "start": "./start.sh"
   },
   "dependencies": {
     "base-class-extend": "0.0.11",
