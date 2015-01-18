@@ -10,6 +10,7 @@ var UrlInputReader = function(url, delimiter) {
 
   this.response_ = null;
   this.partialChunk_ = '';
+  this.isPaused_ = false;
 };
 
 UrlInputReader.prototype = {
@@ -29,14 +30,16 @@ UrlInputReader.prototype = {
   },
 
   pause: function() {
-    if (this.response_) {
+    if (this.response_ && !this.isPaused_) {
       this.response_.pause();
+      this.isPaused_ = true;
     }
   },
 
   resume: function() {
-    if (this.response_) {
+    if (this.response_ && this.isPaused_) {
       this.response_.resume();
+      this.isPaused_ = false;
     }
   },
 
