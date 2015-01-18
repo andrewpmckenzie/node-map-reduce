@@ -89,7 +89,7 @@ Job.prototype = {
     };
 
     this.mappers_.forEach(function(mapper) {
-      mapper.client().registerJob(
+      mapper.registerJob(
         this.id_,
         this.url_,
         this.mapFunction_,
@@ -134,7 +134,7 @@ Job.prototype = {
   },
 
   tidyup_: function() {
-    this.mappers_.forEach(function(mapper) { mapper.client().deleteJob(this.id_); }.bind(this));
+    this.mappers_.forEach(function(mapper) { mapper.deleteJob(this.id_); }.bind(this));
   }
 
 };
