@@ -49,9 +49,13 @@ JobRoutes.prototype = {
   deleteJobRoute_: function(req, res) {
     var jobId = req.params.jobId;
     var job = this.services_.jobRegistry.get(jobId);
-    this.services_.jobRegistry.remove(jobId);
 
-    res.status(200).json(job.toJson());
+    if (job) {
+      this.services_.jobRegistry.remove(jobId);
+      res.status(200).json(job.toJson());
+    } else {
+      res.status(404).send('Job does not exist.');
+    }
   }
 };
 
