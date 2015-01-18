@@ -19,6 +19,10 @@ var MapperClient = Client.extend({
 
   jobListing: function(jobId, opt_onSuccess, opt_onError) {
     this.get('/job', { }, opt_onSuccess, opt_onError);
+  },
+
+  process: function(jobId, chunkId, chunk, opt_onSuccess, opt_onError) {
+    this.post('/job/' + jobId + '/chunk/' + chunkId + '/process', { chunk: chunk }, opt_onSuccess, opt_onError);
   }
 
 });
