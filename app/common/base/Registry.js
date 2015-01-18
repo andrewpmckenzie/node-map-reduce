@@ -25,7 +25,7 @@ var Registry = Class.extend({
 
     var item = this.items_[itemId];
 
-    log('getItem(' + item.id() + ') returned ' + JSON.stringify(item) + '.');
+    log('getItem(' + itemId + ') returned ' + JSON.stringify(item) + '.');
     return item;
   },
 
