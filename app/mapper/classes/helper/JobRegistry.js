@@ -3,8 +3,8 @@ var util = require("util");
 
 var Registry = require('../../../common/base/Registry');
 
-var ControllerRegistry = Registry.extend({
-  logName: 'node-map-reduce:mapper:ControllerRegistry'
+var JobRegistry = Registry.extend({
+  logName: 'node-map-reduce:mapper:JobRegistry'
 });
 
-module.exports = ControllerRegistry;
+module.exports = JobRegistry;
