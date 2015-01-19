@@ -1,5 +1,4 @@
 var util = require("util");
-var log = require('debug')('node-map-reduce:reducer:ReducerApp');
 
 var App = require('../../common/base/App');
 var ControllerClient = require('./client/ControllerClient');
@@ -7,9 +6,11 @@ var JobRegistry = require('./helper/JobRegistry');
 var Job = require('./model/Job');
 
 var ReducerApp = App.extend({
+  logName: 'node-map-reduce:reducer:ReducerApp',
+
   constructor: function(port, controllerUrl) {
-    log('ReducerApp(%s, %s) called.', port, controllerUrl);
     ReducerApp.super_.apply(this, arguments);
+    this.log('ReducerApp(%s, %s) called.', port, controllerUrl);
 
     this.jobRegistry_ = new JobRegistry();
     this.controllerClient_ = new ControllerClient(controllerUrl);
@@ -34,7 +35,7 @@ var ReducerApp = App.extend({
   },
 
   registerJob_: function(options, replyFn) {
-    log('registerJob_(%o) called.', options);
+    this.log('registerJob_(%o) called.', options);
     var job = new Job(options.jobId, options.reduceFunction, this.controllerClient_);
     this.jobRegistry_.add(job);
     replyFn({
@@ -43,15 +44,15 @@ var ReducerApp = App.extend({
   },
 
   deleteJob_: function(options) {
-    log('deleteJob_(%o) called.', options);
+    this.log('deleteJob_(%o) called.', options);
     this.jobRegistry_.remove(options.jobId);
   },
 
   processJobSegment_: function(options) {
-    log('processJobSegment_(%o) called.', options);
+    this.log('processJobSegment_(%o) called.', options);
     var job = this.jobRegistry_.get(options.jobId);
     if (!job) {
-      log('ERROR: could not find job %s to process chunk', options.jobId);
+      this.log('ERROR: could not find job %s to process chunk', options.jobId);
     } else {
       job.process(options.chunkId, options.chunk, options.key, options.values);
     }

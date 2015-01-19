@@ -6,12 +6,15 @@ var http = require('http');
 var io = require('socket.io');
 var extend = require('extend');
 
-var log = require('debug')('node-map-reduce:common:App');
+var debug = require('debug');
 var Class = require('base-class-extend');
 
 var App = Class.extend({
+  logName: 'node-map-reduce:common:Registry',
+
   constructor: function (port) {
-    log('App(' + port + ') called.');
+    this.log = debug(this.logName);
+    this.log('App(' + port + ') called.');
     this.port_ = port;
     this.express_ = express();
 
@@ -25,7 +28,7 @@ var App = Class.extend({
 
     this.io_ = io(this.server_);
     this.io_.on('connection', function (socket) {
-      log('IO socket connection.');
+      this.log('IO socket connection.');
       this.setupSocket(socket);
     }.bind(this));
 
@@ -88,7 +91,7 @@ var App = Class.extend({
     var msg = null;
     params.forEach(function(param) {
       if (obj[param] === undefined || obj[param] === null) {
-        log('ERROR: call to %s is missing %s param', name, param);
+        this.log('ERROR: call to %s is missing %s param', name, param);
         msg = param + ' is required';
       }
     });
@@ -119,7 +122,7 @@ var App = Class.extend({
   },
 
   handleDevError_: function(err, req, res, next) {
-    log(err);
+    this.log(err);
     res.status(err.status || 500).json({
       message: err.message,
       error: err
@@ -131,7 +134,7 @@ var App = Class.extend({
   },
 
   handleServerStart_: function() {
-    log('Server started on port ' + this.server_.address().port + '.');
+    this.log('Server started on port ' + this.server_.address().port + '.');
     this.address_ = 'http://' + this.server_.address().address + ':' + this.server_.address().port;
     this.maybeProcessAddressCallbacks_();
   },

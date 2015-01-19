@@ -1,6 +1,6 @@
 var http = require('http');
 var https = require('https');
-var log = require('debug')('node-map-reduce:mapper:UrlInputReader');
+var log = require('debug')('node-map-reduce:controller:UrlInputReader');
 
 var UrlInputReader = function(url, delimiter) {
   log('UrlInputReader(%s, %s) created.', url, delimiter);

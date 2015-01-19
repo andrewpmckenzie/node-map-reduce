@@ -1,5 +1,4 @@
 var util = require("util");
-var log = require('debug')('node-map-reduce:partitioner:PartitionerApp');
 
 var App = require('../../common/base/App');
 var ControllerClient = require('./client/ControllerClient');
@@ -7,9 +6,11 @@ var JobRegistry = require('./helper/JobRegistry');
 var Job = require('./model/Job');
 
 var PartitionerApp = App.extend({
+  logName: 'node-map-reduce:partitioner:PartitionerApp',
+
   constructor: function(port, controllerUrl) {
-    log('PartitionerApp(%s, %s) called.', port, controllerUrl);
     PartitionerApp.super_.apply(this, arguments);
+    this.log('PartitionerApp(%s, %s) called.', port, controllerUrl);
 
     this.jobRegistry_ = new JobRegistry();
     this.controllerClient_ = new ControllerClient(controllerUrl);
@@ -30,7 +31,7 @@ var PartitionerApp = App.extend({
   },
 
   registerJob_: function(options, replyFn) {
-    log('registerJob_(%o) called.', options);
+    this.log('registerJob_(%o) called.', options);
     var job = new Job(options.jobId, options.mapFunction, this.controllerClient_);
     this.jobRegistry_.add(job);
     replyFn({
@@ -39,7 +40,7 @@ var PartitionerApp = App.extend({
   },
 
   deleteJob_: function(options) {
-    log('deleteJob_(%o) called.', options);
+    this.log('deleteJob_(%o) called.', options);
     this.jobRegistry_.remove(options.jobId);
   }
 });

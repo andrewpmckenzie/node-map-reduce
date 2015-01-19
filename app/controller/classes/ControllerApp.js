@@ -1,5 +1,4 @@
 var util = require("util");
-var log = require('debug')('node-map-reduce:controller:ControllerApp');
 
 var App = require('../../common/base/App');
 var Job = require('./model/Job');
@@ -12,14 +11,16 @@ var ReducerRegistry = require('./helper/ReducerRegistry');
 var Reducer = require('./model/Reducer');
 
 var ControllerApp = App.extend({
+  logName: 'node-map-reduce:controller:ControllerApp',
+
   constructor: function(port) {
-    log('ControllerApp(' + port + ') called.');
+    ControllerApp.super_.apply(this, arguments);
+    this.log('ControllerApp(' + port + ') called.');
+
     this.jobRegistry_ = new JobRegistry();
     this.mapperRegistry_ = new MapperRegistry();
     this.partitionerRegistry_ = new PartitionerRegistry();
     this.reducerRegistry_ = new ReducerRegistry();
-
-    ControllerApp.super_.call(this, port);
   },
 
   setupSocket: function(socket) {
@@ -35,38 +36,38 @@ var ControllerApp = App.extend({
   },
 
   newMapper_: function(socket, options) {
-    log('newMapper_(socket, %o) called.', options);
+    this.log('newMapper_(socket, %o) called.', options);
     var id = this.mapperRegistry_.getUniqueId();
     var mapper = new Mapper(id, socket, options.address);
     this.mapperRegistry_.add(mapper);
   },
 
   newPartitioner_: function(socket, options) {
-    log('newPartitioner_(socket, %o) called.', options);
+    this.log('newPartitioner_(socket, %o) called.', options);
     var id = this.partitionerRegistry_.getUniqueId();
     var partitioner = new Partitioner(id, socket, options.address);
     this.partitionerRegistry_.add(partitioner);
   },
 
   newReducer_: function(socket, options) {
-    log('newReducer_(socket, %o) called.', options);
+    this.log('newReducer_(socket, %o) called.', options);
     var id = this.reducerRegistry_.getUniqueId();
     var reducer = new Reducer(id, socket, options.address);
     this.reducerRegistry_.add(reducer);
   },
 
   chunkProcessed_: function(options) {
-    log('chunkProcessed_(%o) called.', options);
+    this.log('chunkProcessed_(%o) called.', options);
     var job = this.jobRegistry_.get(options.jobId);
     if (job) {
       job.mapComplete(options.chunkId, options.err);
     } else {
-      log('ERROR: Could not find job [%s] for processed chunk.', options.jobId)
+      this.log('ERROR: Could not find job [%s] for processed chunk.', options.jobId)
     }
   },
 
   newJob_: function(options) {
-    log('newJob_(%o) called.', options);
+    this.log('newJob_(%o) called.', options);
     var id = this.jobRegistry_.getUniqueId();
 
     // TODO: throttle mappers passed
@@ -87,7 +88,7 @@ var ControllerApp = App.extend({
   },
 
   jobDetail_: function(options) {
-    log('jobDetail_(%o) called.', options);
+    this.log('jobDetail_(%o) called.', options);
     var job = this.jobRegistry_.get(options.jobId);
 
     if (job) {
