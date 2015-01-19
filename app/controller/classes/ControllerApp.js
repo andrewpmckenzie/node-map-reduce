@@ -23,9 +23,9 @@ var ControllerApp = App.extend({
   },
 
   setupSocket: function(socket) {
-    this.ioEndpoint(socket, 'mapper:register', [], this.newMapper_.bind(this, socket));
-    this.ioEndpoint(socket, 'partitioner:register', [], this.newPartitioner_.bind(this, socket));
-    this.ioEndpoint(socket, 'reducer:register', [], this.newReducer_.bind(this, socket));
+    this.ioEndpoint(socket, 'mapper:register', ['address'], this.newMapper_.bind(this, socket));
+    this.ioEndpoint(socket, 'partitioner:register', ['address'], this.newPartitioner_.bind(this, socket));
+    this.ioEndpoint(socket, 'reducer:register', ['address'], this.newReducer_.bind(this, socket));
     this.ioEndpoint(socket, 'job:chunk:processed', ['jobId', 'chunkId'], this.chunkProcessed_.bind(this));
   },
 
@@ -37,21 +37,21 @@ var ControllerApp = App.extend({
   newMapper_: function(socket, options) {
     log('newMapper_(socket, %o) called.', options);
     var id = this.mapperRegistry_.getUniqueId();
-    var mapper = new Mapper(id, socket);
+    var mapper = new Mapper(id, socket, options.address);
     this.mapperRegistry_.add(mapper);
   },
 
   newPartitioner_: function(socket, options) {
     log('newPartitioner_(socket, %o) called.', options);
     var id = this.partitionerRegistry_.getUniqueId();
-    var partitioner = new Partitioner(id, socket);
+    var partitioner = new Partitioner(id, socket, options.address);
     this.partitionerRegistry_.add(partitioner);
   },
 
   newReducer_: function(socket, options) {
     log('newReducer_(socket, %o) called.', options);
     var id = this.reducerRegistry_.getUniqueId();
-    var reducer = new Reducer(id, socket);
+    var reducer = new Reducer(id, socket, options.address);
     this.reducerRegistry_.add(reducer);
   },
 

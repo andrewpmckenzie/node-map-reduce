@@ -1,10 +1,11 @@
 var PartitionerClient = require('../client/PartitionerClient');
 var log = require('debug')('node-map-reduce:common:Partitioner');
 
-var Partitioner = function(id, socket) {
+var Partitioner = function(id, socket, address) {
   this.id_ = id;
   this.isAvailable_ = true;
   this.client_ = new PartitionerClient(socket);
+  this.address_ = address;
 
   log('Partitioner %s created.', id);
 };

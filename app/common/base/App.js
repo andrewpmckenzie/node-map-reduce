@@ -28,6 +28,9 @@ var App = Class.extend({
       log('IO socket connection.');
       this.setupSocket(socket);
     }.bind(this));
+
+    this.address_ = null;
+    this.addressCallbacks_ = [];
   },
 
   setupSocket: function(socket) { /** No-op: override to decorate a socket when it connects */ },
@@ -52,6 +55,19 @@ var App = Class.extend({
 
   getEndpoint: function(express, route, requiredParams, callback) {
     this.expressEndpoint_('get', express, route, requiredParams, callback);
+  },
+
+  address: function(cb) {
+    this.addressCallbacks_.push(cb);
+    this.maybeProcessAddressCallbacks_();
+  },
+
+  maybeProcessAddressCallbacks_: function() {
+    var address = this.address_;
+    if (address) {
+      this.addressCallbacks_.forEach(function(cb) { cb(address); });
+      this.addressCallbacks_ = [];
+    }
   },
 
   expressEndpoint_: function(method, express, route, requiredParams, callback) {
@@ -116,6 +132,8 @@ var App = Class.extend({
 
   handleServerStart_: function() {
     log('Server started on port ' + this.server_.address().port + '.');
+    this.address_ = 'http://' + this.server_.address().address + ':' + this.server_.address().port;
+    this.maybeProcessAddressCallbacks_();
   },
 
   handleFatalError_: function(error) {

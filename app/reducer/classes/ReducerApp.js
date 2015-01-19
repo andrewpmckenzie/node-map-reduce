@@ -13,8 +13,11 @@ var ReducerApp = App.extend({
 
     this.jobRegistry_ = new JobRegistry();
     this.controllerClient_ = new ControllerClient(controllerUrl);
-    this.controllerClient_.register();
     this.setupControllerSocket(this.controllerClient_.socket());
+
+    this.address(function(address) {
+      this.controllerClient_.register(address);
+    }.bind(this));
   },
 
   setupSocket: function(socket) {

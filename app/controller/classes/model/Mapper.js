@@ -1,10 +1,11 @@
 var MapperClient = require('../client/MapperClient');
 var log = require('debug')('node-map-reduce:common:Mapper');
 
-var Mapper = function(id, socket) {
+var Mapper = function(id, socket, address) {
   this.id_ = id;
   this.isAvailable_ = true;
   this.client_ = new MapperClient(socket);
+  this.address_ = address;
 
   log('Mapper %s created.', id);
 };

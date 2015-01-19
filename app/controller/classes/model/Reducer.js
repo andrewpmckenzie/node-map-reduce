@@ -1,10 +1,11 @@
 var ReducerClient = require('../client/ReducerClient');
 var log = require('debug')('node-map-reduce:common:Reducer');
 
-var Reducer = function(id, socket) {
+var Reducer = function(id, socket, address) {
   this.id_ = id;
   this.isAvailable_ = true;
   this.client_ = new ReducerClient(socket);
+  this.address_ = address;
 
   log('Reducer %s created.', id);
 };
