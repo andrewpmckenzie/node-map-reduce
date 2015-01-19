@@ -1,48 +1,17 @@
 var request = require('request');
 var log = require('debug')('node-map-reduce:common:Client');
+var ioClient = require('socket.io-client');
+
 var Class = require('base-class-extend');
 
 var Client = Class.extend({
-  constructor: function(baseUrl) {
-    this.baseUrl_ = baseUrl;
+  constructor: function(urlOrSocket) {
+    this.socket_ = typeof urlOrSocket === 'string' ? ioClient(urlOrSocket) : urlOrSocket;
   },
 
-  request_: function(method, path, data, onSuccess, onError) {
-    data = data || data;
-    onSuccess = onSuccess || function() {};
-    onError = onError || function() {};
-    var url = this.baseUrl_ + path;
+  send: function(event, payload, response) { this.socket_.emit(event, payload, response); },
 
-    var options = {
-      url: url,
-      method: method,
-      json: true
-    };
-
-    options[method === 'GET' ? 'qs' : 'form'] = data;
-
-    log(method + ' request to ' + url);
-    request(options, function(err, response, body) {
-      var isError = err || /^[^2]/.test('' + response.statusCode);
-      if (isError) {
-        log('ERROR response from %s: %s', url, (err ? err : JSON.stringify(response)));
-        if (onError) {
-          onError(err || response.body);
-        }
-      } else {
-        log('SUCCESS response from ' + url + '.');
-        onSuccess(body);
-      }
-    });
-  },
-
-  get: function(path, data, onSuccess, onError) {
-    this.request_('GET', path, data, onSuccess, onError);
-  },
-
-  post: function(path, data, onSuccess, onError) {
-    this.request_('POST', path, data, onSuccess, onError);
-  }
+  socket: function() { return this.socket_; }
 });
 
 module.exports = Client;

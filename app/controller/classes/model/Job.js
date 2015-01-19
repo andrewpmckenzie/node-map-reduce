@@ -9,17 +9,18 @@ var Job = function(
     reduceFunction,
     mapFunction,
     chunkDelimiter,
-    url,
     mappers
 ) {
   this.id_ = id  || (function() { throw new Error('id not provided'); })();
   this.inputUrl_ = inputUrl || (function() { throw new Error('inputUrl not provided'); })();
   this.reduceFunction_ = reduceFunction || (function() { throw new Error('reduceFunction not provided'); })();
   this.mapFunction_ = mapFunction || (function() { throw new Error('mapFunction not provided'); })();
-  this.url_ = url || (function() { throw new Error('url not provided'); })();
   this.mappers_ = mappers || (function() { throw new Error('mappers not provided'); })();
   this.chunkDelimiter_ = chunkDelimiter || '\n';
   this.inputFinished_ = false;
+
+  this.startTime_ = null;
+  this.endTime_ = null;
 
   this.chunkRegistry_ = new ChunkRegistry();
 
@@ -46,7 +47,6 @@ Job.prototype = {
     return {
       id: this.id_,
       status: this.status_,
-      url: this.url_,
       error: this.error_,
       options: {
         inputUrl: this.inputUrl_,
@@ -58,6 +58,7 @@ Job.prototype = {
   },
 
   start: function() {
+    this.startTime_ = +new Date();
     this.registerJobWithNodes_(
       this.startInputStream_.bind(this)
     );
@@ -82,12 +83,12 @@ Job.prototype = {
       }
     }.bind(this);
 
-    var registrationSuccess = function(mapperId) {
+    var registrationSuccess = function(mapperId, options) {
       repliesRemaining--;
       maybeDone();
     };
 
-    var registrationError = function(mapperId) {
+    var registrationError = function(mapperId, options) {
       log('Error registering with mapper ' + mapperId);
       repliesRemaining--;
       this.mappers_ = this.mappers_.filter(function(mapper) { return mapperId !== mapper.id(); });
@@ -95,13 +96,7 @@ Job.prototype = {
     };
 
     this.mappers_.forEach(function(mapper) {
-      mapper.registerJob(
-        this.id_,
-        this.url_,
-        this.mapFunction_,
-        registrationSuccess.bind(this, mapper.id()),
-        registrationError.bind(this, mapper.id())
-      )
+      mapper.registerJob(this.id_, this.mapFunction_, registrationSuccess.bind(this, mapper.id()), registrationError.bind(this, mapper.id()));
     }.bind(this));
   },
 
@@ -207,7 +202,10 @@ Job.prototype = {
 
   setCompleted_: function() {
     this.status_ = Job.Status.COMPLETED;
-    log('Completed job [%s]', this.id_);
+    this.endTime_ = +new Date();
+    this.runTime_ = this.endTime_ - this.startTime_;
+    log('Completed job [%s] in %ss.', this.id_, this.runTime_ / 1000);
+    console.log('Completed job ['+this.id_+'] in '+(this.runTime_ / 1000)+'s.')
   },
 
   handleReadError_: function(message) {

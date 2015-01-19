@@ -1,10 +1,12 @@
 var MapperClient = require('../client/MapperClient');
+var log = require('debug')('node-map-reduce:common:Mapper');
 
-var Mapper = function(id, url) {
+var Mapper = function(id, socket) {
   this.id_ = id;
-  this.url_ = url;
   this.isAvailable_ = true;
-  this.client_ = new MapperClient(this.url_);
+  this.client_ = new MapperClient(socket);
+
+  log('Mapper %s created.', id);
 };
 
 Mapper.prototype = {
@@ -14,12 +16,15 @@ Mapper.prototype = {
 
   isAvailable: function() { return this.isAvailable_; },
 
-  becameAvailable: function() { this.isAvailable_ = true; },
+  becameAvailable: function() {
+    log('Mapper %s became available.', this.url_);
+    this.isAvailable_ = true;
+  },
 
   toJson: function() {
     return {
       id: this.id_,
-      url: this.url_
+      isAvailable_: this.isAvailable_
     }
   },
 
@@ -32,7 +37,7 @@ Mapper.prototype = {
     this.client_.deleteJob.apply(this.client_, arguments);
   },
 
-  registerJob: function(jobId, jobUrl, mapFunction, opt_onSuccess, opt_onError) {
+  registerJob: function(jobId, mapFunction, onSuccess, onError) {
     this.client_.registerJob.apply(this.client_, arguments);
   }
 

@@ -3,6 +3,9 @@ var path = require('path');
 var logger = require('morgan');
 var bodyParser = require('body-parser');
 var http = require('http');
+var io = require('socket.io');
+var extend = require('extend');
+
 var log = require('debug')('node-map-reduce:common:App');
 var Class = require('base-class-extend');
 
@@ -13,21 +16,67 @@ var App = Class.extend({
     this.express_ = express();
 
     this.configureExpress_();
-    this.configureStandardRoutes_(this.express_);
+    this.setupExpressRoutes(this.express_);
     this.configureGenericRoutes_();
 
     this.server_ = http.createServer(this.express_);
     this.server_.on('error', this.handleFatalError_.bind(this));
     this.server_.on('listening', this.handleServerStart_.bind(this));
+
+    this.io_ = io(this.server_);
+    this.io_.on('connection', function (socket) {
+      log('IO socket connection.');
+      this.setupSocket(socket);
+    }.bind(this));
   },
 
-  configureStandardRoutes_: function(express) {
-    throw new Error('configureStandardRoutes_ is an abstract function')
-  },
+  setupSocket: function(socket) { /** No-op: override to decorate a socket when it connects */ },
+
+  setupExpressRoutes: function(express) { /** No-op: override to add express routes */ },
 
   start: function() {
     this.server_.listen(this.port_);
     return this;
+  },
+
+  ioEndpoint: function(socket, event, requiredParams, callback) {
+    socket.on(event, function(params, replyFn) {
+      this.verifyParamsExist_(params, requiredParams, event);
+      callback(params, replyFn);
+    }.bind(this));
+  },
+
+  postEndpoint: function(express, route, requiredParams, callback) {
+    this.expressEndpoint_('post', express, route, requiredParams, callback);
+  },
+
+  getEndpoint: function(express, route, requiredParams, callback) {
+    this.expressEndpoint_('get', express, route, requiredParams, callback);
+  },
+
+  expressEndpoint_: function(method, express, route, requiredParams, callback) {
+    express[method](route, function(req, res) {
+      var params = extend(req.query, req.params, req.body);
+      var err = this.verifyParamsExist_(params, requiredParams, route);
+
+      if (err) {
+        res.status(400).json({error: err});
+      } else {
+        var response = callback(params);
+        res.status(200).json(response || {});
+      }
+    }.bind(this));
+  },
+
+  verifyParamsExist_: function(obj, params, name) {
+    var msg = null;
+    params.forEach(function(param) {
+      if (obj[param] === undefined || obj[param] === null) {
+        log('ERROR: call to %s is missing %s param', name, param);
+        msg = param + ' is required';
+      }
+    });
+    return msg;
   },
 
   configureExpress_: function() {
