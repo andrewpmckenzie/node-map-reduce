@@ -114,7 +114,8 @@ Job.prototype = {
 
   handleChunks_: function(chunks) {
     if (this.status_ !== Job.Status.RUNNING) {
-      throw new Error('Chunks received while job in ' + this.status_ + ' state.');
+      log('ERROR: Chunks received while job in %s state.', this.status_);
+      return;
     }
 
     chunks.forEach(function(rawChunk) {
@@ -124,7 +125,8 @@ Job.prototype = {
 
   maybeSendChunkToMapper_: function(rawChunk) {
     if (this.status_ !== Job.Status.RUNNING) {
-      throw new Error('Trying to send chunk while job in ' + this.status_ + ' state.');
+      log('ERROR: Trying to send chunk while job in %s state.', this.status_);
+      return;
     }
 
     var availableMapper = this.nextAvailableMapper_();
@@ -170,14 +172,17 @@ Job.prototype = {
     var chunk = this.chunkRegistry_.get(chunkId);
 
     if (!chunk) {
-      throw new Error('Chunk not found: ' + chunkId);
+      log('ERROR: Chunk [%s] not found.', chunkId);
+      return;
     }
 
     if (this.status_ !== Job.Status.RUNNING) {
-      throw new Error('Mapper reported completion of chunk [' + chunkId + '] while job in ' + this.status_ + ' state.');
+      log('ERROR: Mapper reported completion of chunk [%s] while job in %s state.', chunkId, this.status_);
+      return;
     }
 
-    log('Mapping of chunk [%s] complete. Memory state: [%s/%s]', chunkId, process.memoryUsage().heapUsed, process.memoryUsage().heapTotal);
+    log('Mapping of chunk [%s] complete.', chunkId);
+    log('Memory state: [%s/%s]', process.memoryUsage().heapUsed, process.memoryUsage().heapTotal);
 
     // TODO: change these lines to reflect reducing state once we have reducers
     chunk.setDone();
