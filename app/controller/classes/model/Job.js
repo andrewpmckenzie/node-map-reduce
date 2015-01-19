@@ -207,10 +207,14 @@ Job.prototype = {
 
   setCompleted_: function() {
     this.status_ = Job.Status.COMPLETED;
-    this.endTime_ = +new Date();
-    this.runTime_ = this.endTime_ - this.startTime_;
+    this.stopTimer_();
     log('Completed job [%s] in %ss.', this.id_, this.runTime_ / 1000);
     console.log('Completed job ['+this.id_+'] in '+(this.runTime_ / 1000)+'s.')
+  },
+
+  stopTimer_: function() {
+    this.endTime_ = +new Date();
+    this.runTime_ = this.endTime_ - this.startTime_;
   },
 
   handleReadError_: function(message) {
@@ -218,9 +222,11 @@ Job.prototype = {
   },
 
   setError_: function(message) {
-    log('ERROR with job ' + this.id_ + ': ' + message);
     this.status_ = Job.Status.ERROR;
     this.error_ = message;
+    this.stopTimer_();
+    log('ERROR Job [%s] errored after %ss: ', this.id_, this.runTime_ / 1000, message);
+    console.log('ERROR Job ['+this.id_+'] errored after '+(this.runTime_ / 1000)+'s: ', message);
     this.tidyup_();
   },
 
