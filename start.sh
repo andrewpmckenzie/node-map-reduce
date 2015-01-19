@@ -12,44 +12,50 @@ tmux kill-session -t $NAME
 tmux -2 new -d -s $NAME
 
 tmux new-window -t $NAME:1
-tmux split-window
-tmux split-window
-tmux split-window
-tmux split-window
-
-tmux select-layout even-vertical
-
+tmux split-window -h -p 30
 tmux select-pane -t 0
-tmux split-window -h
+tmux split-window -l 30
+tmux split-window -l 25
+tmux split-window -l 20
+tmux split-window -l 10
+tmux split-window -l 5
+
+tmux select-pane -t 6
+tmux split-window
+tmux select-pane -t 7
+tmux resize-pane -y 5
 
 # Pane layout:
-# 0 1                       CONTROLLER                    FILE-SERVER
-# 2                         MAPPER
-# 3                         MAPPER
-# 4                         PARTITIONER
-# 5                         USER
+# 0  CONTROLLER                  6  USER
+# 1  MAPPER                      7  FILE-SERVER
+# 2  MAPPER
+# 3  PARTITIONER
+# 4  REDUCER
+# 5  REDUCER
+
 tmux select-pane -t 0
 tmux send-keys "grunt controller:start --port 3010" C-m
-tmux resize-pane -y 20
 
 tmux select-pane -t 1
-tmux send-keys "cd ./test/server" C-m
-tmux send-keys "./serve.sh" C-m
-tmux resize-pane -x 50
+tmux send-keys "grunt mapper:start --port 3011 --controller http://127.0.0.1:3010" C-m
 
 tmux select-pane -t 2
-tmux send-keys "grunt mapper:start --port 3011 --controller http://127.0.0.1:3010" C-m
-tmux resize-pane -y 5
+tmux send-keys "grunt mapper:start --port 3012 --controller http://127.0.0.1:3010" C-m
 
 tmux select-pane -t 3
-tmux send-keys "grunt mapper:start --port 3012 --controller http://127.0.0.1:3010" C-m
-tmux resize-pane -y 5
+tmux send-keys "grunt partitioner:start --port 3013 --controller http://127.0.0.1:3010" C-m
 
 tmux select-pane -t 4
-tmux send-keys "grunt partitioner:start --port 3013 --controller http://127.0.0.1:3010" C-m
-tmux resize-pane -y 10
+tmux send-keys "grunt reducer:start --port 3014 --controller http://127.0.0.1:3010" C-m
 
 tmux select-pane -t 5
+tmux send-keys "grunt reducer:start --port 3015 --controller http://127.0.0.1:3010" C-m
+
+tmux select-pane -t 7
+tmux send-keys "cd ./test/server" C-m
+tmux send-keys "./serve.sh" C-m
+
+tmux select-pane -t 6
 tmux send-keys "alias exit='tmux kill-session -t $NAME'" C-m
 tmux send-keys "./test/run.sh"
 
