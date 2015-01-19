@@ -4,7 +4,7 @@ var Chunk = function(id, rawChunk) {
   this.id_ = id  || (function() { throw new Error('id not provided'); })();
 
   // kept during the map stage JIC we want to recover from failed mapper
-  this.rawChunk_ = id ||  (function() { throw new Error('rawChunk not provided'); })();
+  this.rawChunk_ = rawChunk;
 
   this.mapper_ = null;
   this.reductionKeys_ = null;
@@ -17,7 +17,6 @@ Chunk.prototype = {
   toJson: function () {
     return {
       id: this.id_,
-      status: this.status_
     }
   },
 
@@ -40,30 +39,25 @@ Chunk.prototype = {
   },
 
   setReducing: function(keys) {
-    this.markMapperDone_();
     this.rawChunk_ = null;
     this.reductionKeys_ = keys;
+    this.markMapperDone_();
+    this.mapper_ = null;
   },
 
   setDone: function() {
-    this.markMapperDone_();
     this.rawChunk_ = null;
     this.reductionKeys_ = null;
     this.isDone_ = true;
+    this.markMapperDone_();
+    this.mapper_ = null;
   },
 
   markMapperDone_: function() {
     if (this.mapper_) {
       this.mapper_.becameAvailable();
-      this.mapper_ = null;
     }
   }
-};
-
-Chunk.Status = {
-  MAPPING: 'MAPPING',
-  REDUCING: 'REDUCING',
-  DONE: 'DONE'
 };
 
 module.exports = Chunk;
