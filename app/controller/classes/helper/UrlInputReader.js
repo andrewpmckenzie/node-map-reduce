@@ -1,7 +1,9 @@
 var http = require('http');
 var https = require('https');
+var log = require('debug')('node-map-reduce:mapper:UrlInputReader');
 
 var UrlInputReader = function(url, delimiter) {
+  log('UrlInputReader(%s, %s) created.', url, delimiter);
   this.url_ = url;
   this.delimiter_ = delimiter;
   this.chunkHandlers_ = [];
@@ -21,6 +23,7 @@ UrlInputReader.prototype = {
   onError: function(callback) { this.errorHandlers_.push(callback); },
 
   read: function() {
+    log('read() called.');
     (/^https:\/\//.test(this.url_) ? https : http).get(this.url_, function(response) {
       response.setEncoding('utf8');
       response.on('data', this.handleData_.bind(this));
@@ -30,6 +33,7 @@ UrlInputReader.prototype = {
   },
 
   pause: function() {
+    log('pause() called.');
     if (this.response_ && !this.isPaused_) {
       this.response_.pause();
       this.isPaused_ = true;
@@ -37,6 +41,7 @@ UrlInputReader.prototype = {
   },
 
   resume: function() {
+    log('resume() called.');
     if (this.response_ && this.isPaused_) {
       this.response_.resume();
       this.isPaused_ = false;
@@ -44,6 +49,7 @@ UrlInputReader.prototype = {
   },
 
   handleClose_: function() {
+    log('handleClose_() called.');
     this.response_ = null;
     var finalChunk = [this.partialChunk_];
     this.partialChunk_ = [];
@@ -53,6 +59,7 @@ UrlInputReader.prototype = {
   },
 
   handleError_: function() {
+    log('handleError_() called.');
     this.response_ = null;
     this.errorHandlers_.forEach(function(callback) { callback(e.message); });
   },

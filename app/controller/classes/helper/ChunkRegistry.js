@@ -1,10 +1,12 @@
 var util = require("util");
-var log = require('debug')('node-map-reduce:controller:ChunkRegistry');
 
 var Registry = require('../../../common/base/Registry');
 
 var ChunkRegistry = Registry.extend({
+  logName: 'node-map-reduce:controller:ChunkRegistry',
+
   tidy: function() {
+    this.log('tidy() called.')
 
     // TODO: make more efficient
     this.getAll().forEach(function(mapper) {

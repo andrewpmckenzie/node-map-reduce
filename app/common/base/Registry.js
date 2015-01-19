@@ -1,4 +1,4 @@
-var log = require('debug')('node-map-reduce:common:Registry');
+var debug = require('debug');
 var Class = require('base-class-extend');
 
 var Registry = Class.extend({
@@ -6,10 +6,11 @@ var Registry = Class.extend({
     this.items_ = {};
     this.deletedItems_ = {};
     this.lastId_ = 1;
+    this.log = debug(this.logName);
   },
 
   add: function(item) {
-    log('addItem(' + item.id() + ') called.');
+    this.log('addItem(' + item.id() + ') called.');
 
     var itemId = '' + item.id();
     if (itemId in this.items_) {
@@ -21,16 +22,16 @@ var Registry = Class.extend({
   },
 
   get: function(itemId) {
-    log('getItem(' + itemId + ') called.');
+    this.log('getItem(' + itemId + ') called.');
 
     var item = this.items_[itemId];
 
-    log('getItem(%s) returned %s.', itemId, item ? ' an item' : 'nothing');
+    this.log('getItem(%s) returned %s.', itemId, item ? ' an item' : 'nothing');
     return item;
   },
 
   remove: function(itemId) {
-    log('deleteItem(' + itemId + ') called.');
+    this.log('deleteItem(' + itemId + ') called.');
 
     delete this.items_[itemId];
     this.deletedItems_[itemId] = true;
@@ -48,7 +49,9 @@ var Registry = Class.extend({
 
   getAll: function() {
     return Object.keys(this.items_).map(function(key) { return this.items_[key]; }.bind(this));
-  }
+  },
+
+  logName: 'node-map-reduce:common:Registry'
 });
 
 module.exports = Registry;

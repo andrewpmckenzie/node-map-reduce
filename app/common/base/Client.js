@@ -9,7 +9,10 @@ var Client = Class.extend({
     this.socket_ = typeof urlOrSocket === 'string' ? ioClient(urlOrSocket) : urlOrSocket;
   },
 
-  send: function(event, payload, response) { this.socket_.emit(event, payload, response); },
+  send: function(event, payload, response) {
+    log('send(%s, %o, %s) called.', event, payload, response);
+    this.socket_.emit(event, payload, response);
+  },
 
   socket: function() { return this.socket_; }
 });
