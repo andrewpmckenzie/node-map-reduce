@@ -37,7 +37,7 @@ var ControllerApp = App.extend({
     log('chunkProcessed_(%o) called.', options);
     var job = this.jobRegistry_.get(options.jobId);
     if (job) {
-      job.mapComplete(options.chunkId);
+      job.mapComplete(options.chunkId, options.err);
     } else {
       log('ERROR: Could not find job [%s] for processed chunk.', options.jobId)
     }
