@@ -9,14 +9,31 @@ var Chunk = function(id, rawChunk) {
   this.mapper_ = null;
   this.reductionKeys_ = null;
   this.isDone_ = false;
+
+  this.errorPhase_ = null;
+  this.error_ = null;
 };
 
 Chunk.prototype = {
   id: function () { return this.id_; },
 
+  error: function() {
+    if (!this.errorPhase_) {
+      return null;
+    }
+
+    return {
+      phase: this.errorPhase_,
+      error: this.error_,
+      mapper: this.mapper_.id(),
+      chunk: this.rawChunk_
+    };
+  },
+
   toJson: function () {
     return {
       id: this.id_,
+      error: this.error()
     }
   },
 
@@ -51,6 +68,13 @@ Chunk.prototype = {
     this.isDone_ = true;
     this.markMapperDone_();
     this.mapper_ = null;
+  },
+
+  setError: function(phase, error) {
+    this.errorPhase_ = phase;
+    this.error_ = error;
+    this.isDone_ = true;
+    this.markMapperDone_();
   },
 
   markMapperDone_: function() {

@@ -23,6 +23,7 @@ var Job = function(
   this.endTime_ = null;
 
   this.chunkRegistry_ = new ChunkRegistry();
+  this.erroringChunkThreshold_ = 10; // TODO: don't hardcode this
 
   this.rawChunkQueue_ = [];
   this.error_ = undefined;
@@ -185,9 +186,18 @@ Job.prototype = {
     log('Memory state: [%s/%s]', process.memoryUsage().heapUsed, process.memoryUsage().heapTotal);
 
     // TODO: change these lines to reflect reducing state once we have reducers
-    chunk.setDone();
+    if (err) {
+      chunk.setError('mapping', err);
+    } else {
+      chunk.setDone();
+    }
     this.chunkRegistry_.tidy();
 
+    this.maybeError_();
+    this.maybeCompleteOrResume_();
+  },
+
+  maybeCompleteOrResume_: function() {
     if (this.inputFinished_ && !this.rawChunkQueue_.length) {
       var chunksProcessing = this.chunkRegistry_.numberOfItems();
       if (chunksProcessing > 0) {
@@ -201,6 +211,14 @@ Job.prototype = {
     }
   },
 
+  maybeError_: function() {
+    var erroringChunks = this.chunkRegistry_.erroringChunks();
+    if (erroringChunks.length > this.erroringChunkThreshold_) {
+      var message = 'Number of erroring chunks (' + erroringChunks.length + ') is greater than allowed amount (' + this.erroringChunkThreshold_ + ').';
+      this.setError_(message);
+    }
+  },
+
   handleReadDone_: function() {
     this.inputFinished_ = true;
   },
@@ -208,8 +226,19 @@ Job.prototype = {
   setCompleted_: function() {
     this.status_ = Job.Status.COMPLETED;
     this.stopTimer_();
+    this.maybePrintErroringChunks_();
     log('Completed job [%s] in %ss.', this.id_, this.runTime_ / 1000);
     console.log('Completed job ['+this.id_+'] in '+(this.runTime_ / 1000)+'s.')
+  },
+
+  maybePrintErroringChunks_: function() {
+    var erroringChunks = this.chunkRegistry_.erroringChunks();
+    if (erroringChunks.length) {
+      log('ERROR Job [%s] could not proccess these chunks:', this.id_);
+      erroringChunks.forEach(function(chunk) {
+        log('ERROR  - %o', chunk.error());
+      });
+    }
   },
 
   stopTimer_: function() {
@@ -225,6 +254,7 @@ Job.prototype = {
     this.status_ = Job.Status.ERROR;
     this.error_ = message;
     this.stopTimer_();
+    this.maybePrintErroringChunks_();
     log('ERROR Job [%s] errored after %ss: ', this.id_, this.runTime_ / 1000, message);
     console.log('ERROR Job ['+this.id_+'] errored after '+(this.runTime_ / 1000)+'s: ', message);
     this.tidyup_();
