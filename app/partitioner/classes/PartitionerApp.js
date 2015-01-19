@@ -6,7 +6,7 @@ var JobRegistry = require('./helper/JobRegistry');
 var Job = require('./model/Job');
 
 var PartitionerApp = App.extend({
-  logName: 'node-map-reduce:partitioner:PartitionerApp',
+  logName: 'nmr:partitioner:PartitionerApp',
 
   constructor: function(port, controllerUrl) {
     PartitionerApp.super_.apply(this, arguments);

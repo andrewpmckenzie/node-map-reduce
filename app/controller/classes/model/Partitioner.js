@@ -1,5 +1,5 @@
 var PartitionerClient = require('../client/PartitionerClient');
-var log = require('debug')('node-map-reduce:common:Partitioner');
+var log = require('debug')('nmr:common:Partitioner');
 
 var Partitioner = function(id, socket, address) {
   this.id_ = id;
@@ -16,7 +16,7 @@ Partitioner.prototype = {
   isAvailable: function() { return this.isAvailable_; },
 
   becameAvailable: function() {
-    log('Partitioner %s became available.', this.url_);
+    log('Partitioner %s became available.', this.id_);
     this.isAvailable_ = true;
   },
 

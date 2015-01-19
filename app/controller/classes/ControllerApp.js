@@ -11,7 +11,7 @@ var ReducerRegistry = require('./helper/ReducerRegistry');
 var Reducer = require('./model/Reducer');
 
 var ControllerApp = App.extend({
-  logName: 'node-map-reduce:controller:ControllerApp',
+  logName: 'nmr:controller:ControllerApp',
 
   constructor: function(port) {
     ControllerApp.super_.apply(this, arguments);

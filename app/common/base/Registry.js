@@ -51,7 +51,7 @@ var Registry = Class.extend({
     return Object.keys(this.items_).map(function(key) { return this.items_[key]; }.bind(this));
   },
 
-  logName: 'node-map-reduce:common:Registry'
+  logName: 'nmr:common:Registry'
 });
 
 module.exports = Registry;

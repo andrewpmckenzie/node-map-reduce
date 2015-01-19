@@ -1,4 +1,4 @@
-var log = require('debug')('node-map-reduce:partitioner:Job');
+var log = require('debug')('nmr:partitioner:Job');
 
 var Job = function(
     id,

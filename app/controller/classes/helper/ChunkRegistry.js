@@ -3,7 +3,7 @@ var util = require("util");
 var Registry = require('../../../common/base/Registry');
 
 var ChunkRegistry = Registry.extend({
-  logName: 'node-map-reduce:controller:ChunkRegistry',
+  logName: 'nmr:controller:ChunkRegistry',
 
   constructor: function() {
     ChunkRegistry.super_.call(this, arguments);

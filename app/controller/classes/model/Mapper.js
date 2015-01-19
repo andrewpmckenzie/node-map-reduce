@@ -1,5 +1,5 @@
 var MapperClient = require('../client/MapperClient');
-var log = require('debug')('node-map-reduce:controller:Mapper');
+var log = require('debug')('nmr:controller:Mapper');
 
 var Mapper = function(id, socket, address) {
   this.id_ = id;
@@ -18,7 +18,7 @@ Mapper.prototype = {
   isAvailable: function() { return this.isAvailable_; },
 
   becameAvailable: function() {
-    log('Mapper %s became available.', this.url_);
+    log('Mapper %s became available.', this.id_);
     this.isAvailable_ = true;
   },
 

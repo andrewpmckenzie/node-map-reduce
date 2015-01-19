@@ -1,5 +1,5 @@
 var request = require('request');
-var log = require('debug')('node-map-reduce:common:Client');
+var log = require('debug')('nmr:common:Client');
 var ioClient = require('socket.io-client');
 
 var Class = require('base-class-extend');

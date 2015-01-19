@@ -1,5 +1,5 @@
 var ReducerClient = require('../client/ReducerClient');
-var log = require('debug')('node-map-reduce:common:Reducer');
+var log = require('debug')('nmr:common:Reducer');
 
 var Reducer = function(id, socket, address) {
   this.id_ = id;
@@ -16,7 +16,7 @@ Reducer.prototype = {
   isAvailable: function() { return this.isAvailable_; },
 
   becameAvailable: function() {
-    log('Reducer %s became available.', this.url_);
+    log('Reducer %s became available.', this.id_);
     this.isAvailable_ = true;
   },
 

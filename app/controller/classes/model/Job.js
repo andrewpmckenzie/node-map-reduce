@@ -1,4 +1,4 @@
-var log = require('debug')('node-map-reduce:controller:Job');
+var log = require('debug')('nmr:controller:Job');
 var UrlInputReader = require('../helper/UrlInputReader');
 var ChunkRegistry = require('../helper/ChunkRegistry');
 var Chunk = require('./Chunk');

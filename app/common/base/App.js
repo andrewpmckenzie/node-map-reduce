@@ -10,7 +10,7 @@ var debug = require('debug');
 var Class = require('base-class-extend');
 
 var App = Class.extend({
-  logName: 'node-map-reduce:common:Registry',
+  logName: 'nmr:common:Registry',
 
   constructor: function (port) {
     this.log = debug(this.logName);

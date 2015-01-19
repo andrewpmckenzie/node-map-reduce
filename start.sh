@@ -4,7 +4,7 @@ hash tmux 2>/dev/null || { echo >&2 "tmux is not installed. You can download and
 hash serve 2>/dev/null || { echo >&2 "serve is not installed. You can install with 'node install -g serve'.  Aborting."; exit 1; }
 
 NAME=node-map-reduce
-export DEBUG=node-map-reduce:*
+export DEBUG=nmr:*
 export DEBUG_COLORS=true
 
 tmux kill-session -t $NAME

@@ -6,7 +6,7 @@ var JobRegistry = require('./helper/JobRegistry');
 var Job = require('./model/Job');
 
 var MapperApp = App.extend({
-  logName: 'node-map-reduce:mapper:MapperApp',
+  logName: 'nmr:mapper:MapperApp',
 
   constructor: function(port, controllerUrl) {
     MapperApp.super_.apply(this, arguments);

@@ -1,4 +1,4 @@
-var log = require('debug')('node-map-reduce:controller:Chunk');
+var log = require('debug')('nmr:controller:Chunk');
 
 var Chunk = function(id, rawChunk) {
   this.id_ = id  || (function() { throw new Error('id not provided'); })();
