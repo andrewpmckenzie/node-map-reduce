@@ -36,6 +36,7 @@ tmux send-keys "grunt controller:start --port 3010" C-m
 tmux select-pane -t 1
 tmux send-keys "cd ./test/server" C-m
 tmux send-keys "./serve.sh" C-m
+tmux resize-pane -x 50
 
 tmux select-pane -t 2
 tmux send-keys "grunt mapper:start --port 3011 --controller http://127.0.0.1:3010" C-m
