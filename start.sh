@@ -14,24 +14,23 @@ tmux -2 new -d -s $NAME
 tmux new-window -t $NAME:1
 tmux split-window
 tmux split-window
-#tmux split-window
+tmux split-window
+tmux split-window
 
 tmux select-layout even-vertical
 
-#tmux select-pane -U
-#tmux split-window -h
-tmux select-pane -U
-tmux split-window -h
-tmux select-pane -U
+tmux select-pane -t 0
 tmux split-window -h
 
 # Pane layout:
-# 0 1
-# 2 3
-# 4 5
-# 6 7
+# 0 1                       CONTROLLER                    FILE-SERVER
+# 2                         MAPPER
+# 3                         MAPPER
+# 4                         PARTITIONER
+# 5                         USER
 tmux select-pane -t 0
 tmux send-keys "grunt controller:start --port 3010" C-m
+tmux resize-pane -y 20
 
 tmux select-pane -t 1
 tmux send-keys "cd ./test/server" C-m
@@ -40,11 +39,17 @@ tmux resize-pane -x 50
 
 tmux select-pane -t 2
 tmux send-keys "grunt mapper:start --port 3011 --controller http://127.0.0.1:3010" C-m
+tmux resize-pane -y 5
 
 tmux select-pane -t 3
 tmux send-keys "grunt mapper:start --port 3012 --controller http://127.0.0.1:3010" C-m
+tmux resize-pane -y 5
 
 tmux select-pane -t 4
+tmux send-keys "grunt partitioner:start --port 3013 --controller http://127.0.0.1:3010" C-m
+tmux resize-pane -y 10
+
+tmux select-pane -t 5
 tmux send-keys "alias exit='tmux kill-session -t $NAME'" C-m
 tmux send-keys "./test/run.sh"
 
