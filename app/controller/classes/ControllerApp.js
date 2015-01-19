@@ -8,6 +8,8 @@ var MapperRegistry = require('./helper/MapperRegistry');
 var Mapper = require('./model/Mapper');
 var PartitionerRegistry = require('./helper/PartitionerRegistry');
 var Partitioner = require('./model/Partitioner');
+var ReducerRegistry = require('./helper/ReducerRegistry');
+var Reducer = require('./model/Reducer');
 
 var ControllerApp = App.extend({
   constructor: function(port) {
@@ -15,6 +17,7 @@ var ControllerApp = App.extend({
     this.jobRegistry_ = new JobRegistry();
     this.mapperRegistry_ = new MapperRegistry();
     this.partitionerRegistry_ = new PartitionerRegistry();
+    this.reducerRegistry_ = new ReducerRegistry();
 
     ControllerApp.super_.call(this, port);
   },
@@ -22,6 +25,7 @@ var ControllerApp = App.extend({
   setupSocket: function(socket) {
     this.ioEndpoint(socket, 'mapper:register', [], this.newMapper_.bind(this, socket));
     this.ioEndpoint(socket, 'partitioner:register', [], this.newPartitioner_.bind(this, socket));
+    this.ioEndpoint(socket, 'reducer:register', [], this.newReducer_.bind(this, socket));
     this.ioEndpoint(socket, 'job:chunk:processed', ['jobId', 'chunkId'], this.chunkProcessed_.bind(this));
   },
 
@@ -42,6 +46,13 @@ var ControllerApp = App.extend({
     var id = this.partitionerRegistry_.getUniqueId();
     var partitioner = new Partitioner(id, socket);
     this.partitionerRegistry_.add(partitioner);
+  },
+
+  newReducer_: function(socket, options) {
+    log('newReducer_(socket, %o) called.', options);
+    var id = this.reducerRegistry_.getUniqueId();
+    var reducer = new Reducer(id, socket);
+    this.reducerRegistry_.add(reducer);
   },
 
   chunkProcessed_: function(options) {
