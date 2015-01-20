@@ -59,7 +59,7 @@ Job.prototype = {
       (consoleOutput || []).forEach(function(consoleMessage) { log('  > %s', consoleMessage); });
       log('Memory state: [%s/%s]', process.memoryUsage().heapUsed, process.memoryUsage().heapTotal);
 
-      this.controllerClient_.chunkProcessed(this.id_, chunkId, errorMessage);
+      this.controllerClient_.chunkProcessed(this.id_, chunkId, Object.keys(result), errorMessage);
       if (!didError) {
         this.partitionerClient_.partition(this.id_, chunkId, result);
       }

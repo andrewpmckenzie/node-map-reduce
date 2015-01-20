@@ -27,7 +27,7 @@ var ControllerApp = App.extend({
     this.ioEndpoint(socket, 'mapper:register', ['address'], this.newMapper_.bind(this, socket));
     this.ioEndpoint(socket, 'partitioner:register', ['address'], this.newPartitioner_.bind(this, socket));
     this.ioEndpoint(socket, 'reducer:register', ['address'], this.newReducer_.bind(this, socket));
-    this.ioEndpoint(socket, 'job:chunk:processed', ['jobId', 'chunkId'], this.chunkProcessed_.bind(this));
+    this.ioEndpoint(socket, 'job:chunk:processed', ['jobId', 'chunkId', 'keys'], this.chunkProcessed_.bind(this));
   },
 
   setupExpressRoutes: function(express) {
@@ -60,7 +60,7 @@ var ControllerApp = App.extend({
     this.log('chunkProcessed_(%o) called.', options);
     var job = this.jobRegistry_.get(options.jobId);
     if (job) {
-      job.mapComplete(options.chunkId, options.err);
+      job.mapComplete(options.chunkId, options.keys, options.err);
     } else {
       this.log('ERROR: Could not find job [%s] for processed chunk.', options.jobId)
     }

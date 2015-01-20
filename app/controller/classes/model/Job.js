@@ -207,7 +207,7 @@ Job.prototype = {
     return this.mappers_.filter(function(mapper) { return mapper.isAvailable(); })[0];
   },
 
-  mapComplete: function(chunkId, err) {
+  mapComplete: function(chunkId, keys, err) {
     var chunk = this.chunkRegistry_.get(chunkId);
 
     if (!chunk) {
@@ -227,7 +227,7 @@ Job.prototype = {
     if (err) {
       chunk.setError('mapping', err);
     } else {
-      chunk.setDone();
+      chunk.setReducing(keys);
     }
     this.chunkRegistry_.tidy();
 
