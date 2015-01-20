@@ -4,7 +4,7 @@ var jsesc = require('jsesc');
 // http://gf3.github.io/sandbox/
 var Sandbox = require('sandbox');
 
-var log = require('debug')('node-reduce-reduce:reducer:Job');
+var log = require('debug')('nmr:reducer:Job');
 
 var Job = function(
     id,
