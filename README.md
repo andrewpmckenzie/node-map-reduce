@@ -10,6 +10,10 @@ To run a controller: `grunt controller:start --port PORT_NUMBER`
 
 To run a mapper: `grunt mapper:start --port PORT_NUMBER --controller http://CONTROLLER_ADDRESS:CONTROLLER_PORT`
 
+To run a reducer: `grunt reducer:start --port PORT_NUMBER --controller http://CONTROLLER_ADDRESS:CONTROLLER_PORT`
+
+To run a partitioner: `grunt partitioner:start --port PORT_NUMBER --controller http://CONTROLLER_ADDRESS:CONTROLLER_PORT`
+
 To make a request:
 
     POST to http://CONTROLLER_ADDRESS:CONTROLLER_PORT/job/new
