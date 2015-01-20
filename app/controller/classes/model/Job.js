@@ -255,7 +255,7 @@ Job.prototype = {
 
     // TODO: change these lines to reflect reducing state once we have reducers
     if (err) {
-      chunk.setError('mapping', err);
+      chunk.setError('reducing', err);
     } else {
       chunk.setDone();
     }
