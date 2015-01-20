@@ -118,7 +118,13 @@ Job.prototype = {
     }.bind(this);
 
     this.mappers_.forEach(function(mapper) {
-      mapper.registerJob(this.id_, this.mapFunction_, registrationSuccess, mapperRegistrationError.bind(this, mapper.id()));
+      mapper.registerJob(
+        this.id_,
+        this.mapFunction_,
+        this.partitioner_.address(),
+        registrationSuccess,
+        mapperRegistrationError.bind(this, mapper.id())
+      );
     }.bind(this));
 
     var reducerRegistrationError = function(reducerId) {

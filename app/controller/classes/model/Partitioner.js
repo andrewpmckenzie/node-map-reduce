@@ -13,6 +13,8 @@ var Partitioner = function(id, socket, address) {
 Partitioner.prototype = {
   id: function() { return this.id_; },
 
+  address: function() { return this.address_; },
+
   isAvailable: function() { return this.isAvailable_; },
 
   becameAvailable: function() {
