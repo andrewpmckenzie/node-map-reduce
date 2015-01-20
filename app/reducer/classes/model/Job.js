@@ -17,6 +17,7 @@ var Job = function(
   this.sandbox_ = new Sandbox({
     timeout: 1000 // TODO: make this configurable
   });
+  this.results_ = {};
 };
 
 Job.prototype = {
@@ -34,6 +35,10 @@ Job.prototype = {
   process: function(chunkId, key, values, partitionerClient) {
     log('process(%s, %s, %o) called', chunkId, key, values);
     partitionerClient.reduced(this.id_, chunkId, key);
+  },
+
+  results: function() {
+    return this.results_;
   }
 };
 
