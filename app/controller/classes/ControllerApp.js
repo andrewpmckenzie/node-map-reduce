@@ -73,13 +73,16 @@ var ControllerApp = App.extend({
     // TODO: throttle mappers passed
     var mappers = this.mapperRegistry_.getAll();
 
+    var partitioner = this.partitionerRegistry_.getFirstAvailable();
+
     var job = new Job(
         id,
         options.inputUrl,
         options.reduceFunction,
         options.mapFunction,
         options.chunkDelimiter,
-        mappers
+        mappers,
+        partitioner
     );
     this.jobRegistry_.add(job);
     job.start();

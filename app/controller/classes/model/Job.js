@@ -9,13 +9,15 @@ var Job = function(
     reduceFunction,
     mapFunction,
     chunkDelimiter,
-    mappers
+    mappers,
+    partitioner
 ) {
   this.id_ = id  || (function() { throw new Error('id not provided'); })();
   this.inputUrl_ = inputUrl || (function() { throw new Error('inputUrl not provided'); })();
   this.reduceFunction_ = reduceFunction || (function() { throw new Error('reduceFunction not provided'); })();
   this.mapFunction_ = mapFunction || (function() { throw new Error('mapFunction not provided'); })();
   this.mappers_ = mappers || (function() { throw new Error('mappers not provided'); })();
+  this.partitioner_ = partitioner || (function() { throw new Error('partitioner not provided'); })();
   this.chunkDelimiter_ = chunkDelimiter || '\n';
   this.inputFinished_ = false;
 
@@ -67,7 +69,7 @@ Job.prototype = {
 
   registerJobWithNodes_: function(onDone) {
     log('registerJobWithNodes_() called.');
-    var repliesRemaining = this.mappers_.length;
+    var repliesRemaining = this.mappers_.length + 1 /* partitioner */;
 
     if (this.error_) {
       log('Stopping as Job is in error state');
@@ -76,7 +78,7 @@ Job.prototype = {
 
     var maybeDone = function() {
       if (repliesRemaining === 0) {
-        log('Registered job with ' + this.mappers_.length + ' mappers.');
+        log('Registered job with ' + this.mappers_.length + ' mappers, and partitioner.');
         if (this.mappers_.length === 0) {
           this.setError_('Could not register with mappers.');
         }
@@ -84,20 +86,27 @@ Job.prototype = {
       }
     }.bind(this);
 
-    var registrationSuccess = function(mapperId, options) {
+    var registrationSuccess = function() {
       repliesRemaining--;
       maybeDone();
-    };
+    }.bind(this);
 
-    var registrationError = function(mapperId, options) {
+    var mapperRegistrationError = function(mapperId) {
       log('Error registering with mapper ' + mapperId);
       repliesRemaining--;
       this.mappers_ = this.mappers_.filter(function(mapper) { return mapperId !== mapper.id(); });
       maybeDone();
-    };
+    }.bind(this);
+
+    var partitionerRegistrationError = function() {
+      log('Error registering with partitioner ' + this.partitioner_.id());
+      this.setError_('Could not register with partitioner.');
+    }.bind(this);
+
+    this.partitioner_.registerJob(this.id_, registrationSuccess, partitionerRegistrationError);
 
     this.mappers_.forEach(function(mapper) {
-      mapper.registerJob(this.id_, this.mapFunction_, registrationSuccess.bind(this, mapper.id()), registrationError.bind(this, mapper.id()));
+      mapper.registerJob(this.id_, this.mapFunction_, registrationSuccess, mapperRegistrationError.bind(this, mapper.id()));
     }.bind(this));
   },
 
@@ -228,7 +237,8 @@ Job.prototype = {
     this.stopTimer_();
     this.maybePrintErroringChunks_();
     log('Completed job [%s] in %ss.', this.id_, this.runTime_ / 1000);
-    console.log('Completed job ['+this.id_+'] in '+(this.runTime_ / 1000)+'s.')
+    console.log('Completed job ['+this.id_+'] in '+(this.runTime_ / 1000)+'s.');
+    this.tidyup_();
   },
 
   maybePrintErroringChunks_: function() {
@@ -261,7 +271,9 @@ Job.prototype = {
   },
 
   tidyup_: function() {
+    log('tidyup_() called.');
     this.mappers_.forEach(function(mapper) { mapper.deleteJob(this.id_); }.bind(this));
+    this.partitioner_.deleteJob(this.id_);
   }
 
 };
