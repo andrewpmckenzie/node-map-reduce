@@ -2,6 +2,8 @@ var util = require('util');
 var Client = require('../../../common/base/Client');
 
 var MapperClient = Client.extend({
+  logName: 'nmr:controller:MapperClient',
+
   registerJob: function(jobId, mapFunction, partitionerAddress, onSuccess, onError) {
     this.send('job:register', {
       jobId: jobId,

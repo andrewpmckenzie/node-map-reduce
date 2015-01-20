@@ -2,6 +2,8 @@ var util = require('util');
 var Client = require('../../../common/base/Client');
 
 var PartitionerClient = Client.extend({
+  logName: 'nmr:controller:PartitionerClient',
+
   registerJob: function(jobId, reducerAddresses, onSuccess, onError) {
     this.send('job:register', {
       jobId: jobId,

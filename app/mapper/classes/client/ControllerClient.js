@@ -2,6 +2,8 @@ var util = require('util');
 var Client = require('../../../common/base/Client');
 
 var ControllerClient = Client.extend({
+  logName: 'nmr:mapper:ControllerClient',
+
   register: function(address) {
     this.send('mapper:register', {address: address});
   },

@@ -2,6 +2,8 @@ var util = require('util');
 var Client = require('../../../common/base/Client');
 
 var ReducerClient = Client.extend({
+  logName: 'nmr:controller:ReducerClient',
+
   registerJob: function(jobId, reduceFunction, onSuccess, onError) {
     this.send('job:register', {
       jobId: jobId,
