@@ -24,7 +24,7 @@ Chunk.prototype = {
     return {
       phase: this.errorPhase_,
       error: this.error_,
-      mapper: this.mapper_.id(),
+      mapper: this.mapper_ && this.mapper_.id(),
       chunk: this.rawChunk_
     };
   },
