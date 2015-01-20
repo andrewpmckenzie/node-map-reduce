@@ -26,12 +26,19 @@ tmux select-pane -t 7
 tmux resize-pane -y 5
 
 # Pane layout:
-# 0  CONTROLLER                  6  USER
-# 1  MAPPER                      7  FILE-SERVER
-# 2  MAPPER
-# 3  PARTITIONER
-# 4  REDUCER
-# 5  REDUCER
+#-----------------------------------------------------#
+# 0  CONTROLLER                        6  USER        #
+#                                                     #
+#                                                     #
+#                                                     #
+#                                                     #
+# 1  MAPPER                                           #
+# 2  MAPPER                                           #
+# 3  PARTITIONER                                      #
+#                                                     #
+# 4  REDUCER                                          #
+# 5  REDUCER                            7  FILE-SVR   #
+#-----------------------------------------------------#
 
 tmux select-pane -t 0
 tmux send-keys "grunt controller:start --port 3010" C-m
