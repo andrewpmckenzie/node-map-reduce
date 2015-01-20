@@ -10,7 +10,7 @@ var Client = Class.extend({
   },
 
   send: function(event, payload, response) {
-    log('send(%s, %o, %s) called.', event, payload, response);
+    log('send(%s, %o, %s) called.', event, payload, response ? '[function]' : 'undefined');
     this.socket_.emit(event, payload, response);
   },
 

@@ -2,16 +2,17 @@ var ReducerClient = require('../client/ReducerClient');
 var log = require('debug')('nmr:common:Reducer');
 
 var Reducer = function(id, socket, address) {
+  log('Reducer(%s, %s, %s) called.', id, socket, address);
   this.id_ = id;
   this.isAvailable_ = true;
   this.client_ = new ReducerClient(socket);
   this.address_ = address;
-
-  log('Reducer %s created.', id);
 };
 
 Reducer.prototype = {
   id: function() { return this.id_; },
+
+  address: function() { return this.address_; },
 
   isAvailable: function() { return this.isAvailable_; },
 

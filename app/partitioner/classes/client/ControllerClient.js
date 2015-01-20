@@ -6,8 +6,8 @@ var ControllerClient = Client.extend({
     this.send('partitioner:register', {address: address});
   },
 
-  chunkProcessed: function(jobId, chunkId, errorMessage) {
-    this.send('reducer:chunk:processed', {jobId: jobId, chunkId: chunkId, err: errorMessage});
+  chunkProcessed: function(jobId, chunkId, errors) {
+    this.send('reducer:chunk:processed', {jobId: jobId, chunkId: chunkId, err: errors});
   }
 });
 

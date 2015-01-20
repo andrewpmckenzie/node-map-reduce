@@ -33,7 +33,7 @@ Partitioner.prototype = {
     this.client_.deleteJob.apply(this.client_, arguments);
   },
 
-  registerJob: function(jobId, onSuccess, onError) {
+  registerJob: function(jobId, reducerAddresses, onSuccess, onError) {
     this.client_.registerJob.apply(this.client_, arguments);
   }
 

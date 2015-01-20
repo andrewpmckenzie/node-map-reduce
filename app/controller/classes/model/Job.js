@@ -108,7 +108,9 @@ Job.prototype = {
       this.setError_('Could not register with partitioner.');
     }.bind(this);
 
-    this.partitioner_.registerJob(this.id_, registrationSuccess, partitionerRegistrationError);
+    // TODO: handle case where could not register with all reducers
+    var reducerAddresses = this.reducers_.map(function(reducer) { return reducer.address(); });
+    this.partitioner_.registerJob(this.id_, reducerAddresses, registrationSuccess, partitionerRegistrationError);
 
     var mapperRegistrationError = function(mapperId) {
       log('Error registering with mapper ' + mapperId);
