@@ -26,14 +26,14 @@ var MapperApp = App.extend({
   },
 
   setupControllerSocket: function(socket) {
-    this.ioEndpoint(socket, 'job:register', ['jobId', 'mapFunction'], this.registerJob_.bind(this));
+    this.ioEndpoint(socket, 'job:register', ['jobId', 'mapFunction', 'partitionerAddress'], this.registerJob_.bind(this));
     this.ioEndpoint(socket, 'job:delete', ['jobId'], this.deleteJob_.bind(this));
     this.ioEndpoint(socket, 'job:chunk:process', ['jobId', 'chunkId', 'chunk'], this.processJobChunk_.bind(this));
   },
 
   registerJob_: function(options, replyFn) {
     this.log('registerJob_(%o) called.', options);
-    var job = new Job(options.jobId, options.mapFunction, this.controllerClient_);
+    var job = new Job(options.jobId, options.mapFunction, options.partitionerAddress, this.controllerClient_);
     this.jobRegistry_.add(job);
     replyFn({
       success: true
