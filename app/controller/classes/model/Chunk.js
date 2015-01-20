@@ -7,7 +7,6 @@ var Chunk = function(id, rawChunk) {
   this.rawChunk_ = rawChunk;
 
   this.mapper_ = null;
-  this.reductionKeys_ = null;
   this.isDone_ = false;
 
   this.errorPhase_ = null;
@@ -37,16 +36,6 @@ Chunk.prototype = {
     }
   },
 
-  getStatus: function() {
-    if (this.mapper_) {
-      return Chunk.Status.MAPPING;
-    } else if (this.reductionKeys_) {
-      return Chunk.Status.REDUCING;
-    } else {
-      return Chunk.Status.DONE;
-    }
-  },
-
   canDelete: function() {
     return this.isDone_;
   },
@@ -55,16 +44,14 @@ Chunk.prototype = {
     this.mapper_ = mapper;
   },
 
-  setReducing: function(keys) {
+  setReducing: function() {
     this.rawChunk_ = null;
-    this.reductionKeys_ = keys;
     this.markMapperDone_();
     this.mapper_ = null;
   },
 
   setDone: function() {
     this.rawChunk_ = null;
-    this.reductionKeys_ = null;
     this.isDone_ = true;
     this.markMapperDone_();
     this.mapper_ = null;

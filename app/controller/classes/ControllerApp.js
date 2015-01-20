@@ -27,7 +27,7 @@ var ControllerApp = App.extend({
     this.ioEndpoint(socket, 'mapper:register', ['address'], this.newMapper_.bind(this, socket));
     this.ioEndpoint(socket, 'partitioner:register', ['address'], this.newPartitioner_.bind(this, socket));
     this.ioEndpoint(socket, 'reducer:register', ['address'], this.newReducer_.bind(this, socket));
-    this.ioEndpoint(socket, 'mapper:chunk:processed', ['jobId', 'chunkId', 'keys'], this.mapperChunkProcessed_.bind(this));
+    this.ioEndpoint(socket, 'mapper:chunk:processed', ['jobId', 'chunkId'], this.mapperChunkProcessed_.bind(this));
     this.ioEndpoint(socket, 'reducer:chunk:processed', ['jobId', 'chunkId'], this.reducerChunkProcessed_.bind(this));
   },
 
@@ -61,7 +61,7 @@ var ControllerApp = App.extend({
     this.log('mapperChunkProcessed_(%o) called.', options);
     var job = this.jobRegistry_.get(options.jobId);
     if (job) {
-      job.mapComplete(options.chunkId, options.keys, options.err);
+      job.mapComplete(options.chunkId, options.err);
     } else {
       this.log('ERROR: Could not find job [%s] for processed chunk.', options.jobId)
     }
