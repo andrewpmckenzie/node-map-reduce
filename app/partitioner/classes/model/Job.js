@@ -51,6 +51,7 @@ Job.prototype = {
 
     if (!chunk) {
       log('Could not find chunk %s to mark key %s as complete.', chunkId, key);
+      return;
     }
 
     this.outstandingChunks_[chunkId] = chunk.filter(function(k) { return k !== key; });
@@ -71,8 +72,6 @@ Job.prototype = {
       delete this.outstandingChunks_[chunkId];
       this.chunkProcessed_(chunkId, errors);
     }
-
-    // TODO: send to reducer(hash(key))
   },
 
   chunkProcessed_: function(chunkId, errors) {
