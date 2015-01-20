@@ -22,7 +22,11 @@ var PartitionerApp = App.extend({
   },
 
   setupSocket: function(socket) {
-    this.setupControllerSocket(socket);
+    this.setupMapperSocket(socket);
+  },
+
+  setupMapperSocket: function(socket) {
+    this.ioEndpoint(socket, 'chunk:partition', ['jobId', 'chunkId', 'payload'], this.handleMappedChunk_.bind(this));
   },
 
   setupControllerSocket: function(socket) {
@@ -37,6 +41,10 @@ var PartitionerApp = App.extend({
     replyFn({
       success: true
     });
+  },
+
+  handleMappedChunk_: function(options) {
+    this.log('handleMappedChunk_(%o) called.', options);
   },
 
   deleteJob_: function(options) {

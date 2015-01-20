@@ -5,7 +5,7 @@ var Job = function(
     client
 ) {
   this.id_ = id  || (function() { throw new Error('id not provided'); })();
-  this.client_ = client;
+  this.controllerClient_ = client;
 };
 
 Job.prototype = {
