@@ -22,6 +22,12 @@ var ReducerClient = Client.extend({
     this.send('job:delete', {
       jobId: jobId
     });
+  },
+
+  results: function(jobId, cb) {
+    this.send('job:results', {
+      jobId: jobId
+    }, cb);
   }
 
 });

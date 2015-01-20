@@ -34,6 +34,10 @@ Reducer.prototype = {
 
   registerJob: function(jobId, reduceFunction, onSuccess, onError) {
     this.client_.registerJob.apply(this.client_, arguments);
+  },
+
+  results: function(jobId, cb) {
+    this.client_.results.apply(this.client_, arguments);
   }
 
 };
