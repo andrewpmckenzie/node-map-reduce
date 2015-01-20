@@ -10,6 +10,7 @@ var Job = function(
     mapFunction,
     chunkDelimiter,
     mappers,
+    reducers,
     partitioner
 ) {
   this.id_ = id  || (function() { throw new Error('id not provided'); })();
@@ -17,6 +18,7 @@ var Job = function(
   this.reduceFunction_ = reduceFunction || (function() { throw new Error('reduceFunction not provided'); })();
   this.mapFunction_ = mapFunction || (function() { throw new Error('mapFunction not provided'); })();
   this.mappers_ = mappers || (function() { throw new Error('mappers not provided'); })();
+  this.reducers_ = reducers || (function() { throw new Error('reducers not provided'); })();
   this.partitioner_ = partitioner || (function() { throw new Error('partitioner not provided'); })();
   this.chunkDelimiter_ = chunkDelimiter || '\n';
   this.inputFinished_ = false;
@@ -38,6 +40,10 @@ var Job = function(
 
   if (this.mappers_.length === 0) {
     this.setError_('No mappers available.');
+  }
+
+  if (this.reducers_.length === 0) {
+    this.setError_('No reducers available.');
   }
 };
 
@@ -69,32 +75,31 @@ Job.prototype = {
 
   registerJobWithNodes_: function(onDone) {
     log('registerJobWithNodes_() called.');
-    var repliesRemaining = this.mappers_.length + 1 /* partitioner */;
 
     if (this.error_) {
       log('Stopping as Job is in error state');
       return;
     }
 
+    var repliesRemaining = this.mappers_.length + this.reducers_.length + 1 /* partitioner */;
+
     var maybeDone = function() {
       if (repliesRemaining === 0) {
-        log('Registered job with ' + this.mappers_.length + ' mappers, and partitioner.');
         if (this.mappers_.length === 0) {
           this.setError_('Could not register with mappers.');
+          return;
         }
+        if (this.reducers_.length === 0) {
+          this.setError_('Could not register with reducers.');
+          return;
+        }
+        log('Registered job with %s mappers, %s reducers, and a partitioner.', this.mappers_.length, this.reducers_.length);
         onDone();
       }
     }.bind(this);
 
     var registrationSuccess = function() {
       repliesRemaining--;
-      maybeDone();
-    }.bind(this);
-
-    var mapperRegistrationError = function(mapperId) {
-      log('Error registering with mapper ' + mapperId);
-      repliesRemaining--;
-      this.mappers_ = this.mappers_.filter(function(mapper) { return mapperId !== mapper.id(); });
       maybeDone();
     }.bind(this);
 
@@ -105,8 +110,26 @@ Job.prototype = {
 
     this.partitioner_.registerJob(this.id_, registrationSuccess, partitionerRegistrationError);
 
+    var mapperRegistrationError = function(mapperId) {
+      log('Error registering with mapper ' + mapperId);
+      repliesRemaining--;
+      this.mappers_ = this.mappers_.filter(function(mapper) { return mapperId !== mapper.id(); });
+      maybeDone();
+    }.bind(this);
+
     this.mappers_.forEach(function(mapper) {
       mapper.registerJob(this.id_, this.mapFunction_, registrationSuccess, mapperRegistrationError.bind(this, mapper.id()));
+    }.bind(this));
+
+    var reducerRegistrationError = function(reducerId) {
+      log('Error registering with reducer ' + reducerId);
+      repliesRemaining--;
+      this.reducers_ = this.reducers_.filter(function(reducer) { return reducerId !== reducer.id(); });
+      maybeDone();
+    }.bind(this);
+
+    this.reducers_.forEach(function(reducer) {
+      reducer.registerJob(this.id_, this.reduceFunction_, registrationSuccess, reducerRegistrationError.bind(this, reducer.id()));
     }.bind(this));
   },
 
@@ -273,6 +296,7 @@ Job.prototype = {
   tidyup_: function() {
     log('tidyup_() called.');
     this.mappers_.forEach(function(mapper) { mapper.deleteJob(this.id_); }.bind(this));
+    this.reducers_.forEach(function(reducer) { reducer.deleteJob(this.id_); }.bind(this));
     this.partitioner_.deleteJob(this.id_);
   }
 

@@ -70,8 +70,9 @@ var ControllerApp = App.extend({
     this.log('newJob_(%o) called.', options);
     var id = this.jobRegistry_.getUniqueId();
 
-    // TODO: throttle mappers passed
+    // TODO: throttle mappers/reducers passed
     var mappers = this.mapperRegistry_.getAll();
+    var reducers = this.reducerRegistry_.getAll();
 
     var partitioner = this.partitionerRegistry_.getFirstAvailable();
 
@@ -82,6 +83,7 @@ var ControllerApp = App.extend({
         options.mapFunction,
         options.chunkDelimiter,
         mappers,
+        reducers,
         partitioner
     );
     this.jobRegistry_.add(job);
