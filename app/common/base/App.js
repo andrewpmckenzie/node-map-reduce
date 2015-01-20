@@ -94,7 +94,7 @@ var App = Class.extend({
         this.log('ERROR: call to %s is missing %s param', name, param);
         msg = param + ' is required';
       }
-    });
+    }.bind(this));
     return msg;
   },
 

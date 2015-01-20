@@ -26,7 +26,7 @@ var PartitionerApp = App.extend({
   },
 
   setupControllerSocket: function(socket) {
-    this.ioEndpoint(socket, 'job:register', ['jobId', 'mapFunction'], this.registerJob_.bind(this));
+    this.ioEndpoint(socket, 'job:register', ['jobId'], this.registerJob_.bind(this));
     this.ioEndpoint(socket, 'job:delete', ['jobId'], this.deleteJob_.bind(this));
   },
 
