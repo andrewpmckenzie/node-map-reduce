@@ -7,7 +7,7 @@ var ControllerClient = Client.extend({
   },
 
   chunkProcessed: function(jobId, chunkId, keys, errorMessage) {
-    this.send('job:chunk:processed', {jobId: jobId, chunkId: chunkId, keys: keys, err: errorMessage});
+    this.send('mapper:chunk:processed', {jobId: jobId, chunkId: chunkId, keys: keys, err: errorMessage});
   }
 });
 

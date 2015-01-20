@@ -36,7 +36,7 @@ var PartitionerApp = App.extend({
 
   registerJob_: function(options, replyFn) {
     this.log('registerJob_(%o) called.', options);
-    var job = new Job(options.jobId, options.mapFunction, this.controllerClient_);
+    var job = new Job(options.jobId, this.controllerClient_);
     this.jobRegistry_.add(job);
     replyFn({
       success: true
@@ -45,6 +45,12 @@ var PartitionerApp = App.extend({
 
   handleMappedChunk_: function(options) {
     this.log('handleMappedChunk_(%o) called.', options);
+    var job = this.jobRegistry_.get(options.jobId);
+    if (!job) {
+      this.log('ERROR: could not find job %s to process chunk', options.jobId);
+    } else {
+      job.process(options.chunkId, options.payload);
+    }
   },
 
   deleteJob_: function(options) {

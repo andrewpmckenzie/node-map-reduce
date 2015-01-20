@@ -235,6 +235,34 @@ Job.prototype = {
     this.maybeCompleteOrResume_();
   },
 
+  reduceComplete: function(chunkId, err) {
+    var chunk = this.chunkRegistry_.get(chunkId);
+
+    if (!chunk) {
+      log('ERROR: Chunk [%s] not found.', chunkId);
+      return;
+    }
+
+    if (this.status_ !== Job.Status.RUNNING) {
+      log('ERROR: Reducer reported completion of chunk [%s] while job in %s state.', chunkId, this.status_);
+      return;
+    }
+
+    log('Reducing of chunk [%s] complete.', chunkId);
+    log('Memory state: [%s/%s]', process.memoryUsage().heapUsed, process.memoryUsage().heapTotal);
+
+    // TODO: change these lines to reflect reducing state once we have reducers
+    if (err) {
+      chunk.setError('mapping', err);
+    } else {
+      chunk.setDone();
+    }
+    this.chunkRegistry_.tidy();
+
+    this.maybeError_();
+    this.maybeCompleteOrResume_();
+  },
+
   maybeCompleteOrResume_: function() {
     if (this.inputFinished_ && !this.rawChunkQueue_.length) {
       var chunksProcessing = this.chunkRegistry_.numberOfItems();
