@@ -21,6 +21,7 @@
     "request": "^2.51.0",
     "sandbox": "^0.8.6",
     "socket.io": "^1.2.1",
-    "socket.io-client": "^1.2.1"
+    "socket.io-client": "^1.2.1",
+    "string-hash": "^1.1.0"
   }
 }

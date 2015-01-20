@@ -31,8 +31,9 @@ Job.prototype = {
     };
   },
 
-  process: function(chunkId, key, values) {
+  process: function(chunkId, key, values, partitionerClient) {
     log('process(%s, %s, %o) called', chunkId, key, values);
+    partitionerClient.reduced(this.id_, chunkId, key);
   }
 };
 

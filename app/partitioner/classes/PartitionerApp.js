@@ -36,7 +36,7 @@ var PartitionerApp = App.extend({
   },
 
   setupReducerSocket: function(socket) {
-    this.ioEndpoint(socket, 'chunk:key:reduced', ['jobId', 'chunkId', 'key'], this.handleReducedChunkKey_.bind(this));
+    this.ioEndpoint(socket, 'job:kv:reduced', ['jobId', 'chunkId', 'key'], this.handleReducedChunkKey_.bind(this));
   },
 
   registerJob_: function(options, replyFn) {

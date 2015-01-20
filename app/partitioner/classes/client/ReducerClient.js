@@ -5,7 +5,7 @@ var ReducerClient = Client.extend({
   logName: 'nmr:partitioner:ReducerClient',
 
   reduce: function(jobId, chunkId, key, values) {
-    this.send('chunk:reduce', {jobId: jobId, chunkId: chunkId, key: key, values: values});
+    this.send('job:kv:process', {jobId: jobId, chunkId: chunkId, key: key, values: values});
   }
 });
 

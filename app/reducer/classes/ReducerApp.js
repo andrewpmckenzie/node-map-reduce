@@ -2,6 +2,7 @@ var util = require("util");
 
 var App = require('../../common/base/App');
 var ControllerClient = require('./client/ControllerClient');
+var PartitionerClient = require('./client/PartitionerClient');
 var JobRegistry = require('./helper/JobRegistry');
 var Job = require('./model/Job');
 
@@ -22,7 +23,7 @@ var ReducerApp = App.extend({
   },
 
   setupSocket: function(socket) {
-    this.setupControllerSocket(socket);
+    this.setupPartitionerSocket(socket);
   },
 
   setupControllerSocket: function(socket) {
@@ -31,7 +32,8 @@ var ReducerApp = App.extend({
   },
 
   setupPartitionerSocket: function(socket) {
-    this.ioEndpoint(socket, 'job:segment:process', ['jobId', 'chunkId', 'key', 'values'], this.processJobSegment_.bind(this));
+    var partitionerClient = new PartitionerClient(socket);
+    this.ioEndpoint(socket, 'job:kv:process', ['jobId', 'chunkId', 'key', 'values'], this.processKeyValues_.bind(this, partitionerClient));
   },
 
   registerJob_: function(options, replyFn) {
@@ -48,13 +50,13 @@ var ReducerApp = App.extend({
     this.jobRegistry_.remove(options.jobId);
   },
 
-  processJobSegment_: function(options) {
-    this.log('processJobSegment_(%o) called.', options);
+  processKeyValues_: function(partitionerClient, options) {
+    this.log('processKeyValues_(%o) called.', options);
     var job = this.jobRegistry_.get(options.jobId);
     if (!job) {
       this.log('ERROR: could not find job %s to process chunk', options.jobId);
     } else {
-      job.process(options.chunkId, options.chunk, options.key, options.values);
+      job.process(options.chunkId, options.key, options.values, partitionerClient);
     }
   }
 });

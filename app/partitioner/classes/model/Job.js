@@ -1,3 +1,4 @@
+var stringHash = require('string-hash');
 var log = require('debug')('nmr:partitioner:Job');
 
 var Job = function(
@@ -38,8 +39,10 @@ Job.prototype = {
 
     this.outstandingChunks_[chunkId] = keys;
 
-    // TEMP
-    this.chunkProcessed_(chunkId);
+    keys.forEach(function(key) {
+      var reducer = stringHash(key) % this.reducerClients_.length;
+      this.reducerClients_[reducer].reduce(this.id_, chunkId, key, mappedChunk[key]);
+    }.bind(this));
   },
 
   chunkKeyProcessed: function(chunkId, key, error) {
@@ -50,7 +53,7 @@ Job.prototype = {
       log('Could not find chunk %s to mark key %s as complete.', chunkId, key);
     }
 
-    this.outstandingChunks_[chunkId] = this.outstandingChunks_[chunkId].filter(function(k) { return k !== key; });
+    this.outstandingChunks_[chunkId] = chunk.filter(function(k) { return k !== key; });
 
     if (error) {
       this.chunkErrors_[chunkId] = this.chunkErrors_[chunkId] || {};
