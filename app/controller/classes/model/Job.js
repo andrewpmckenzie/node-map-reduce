@@ -293,9 +293,9 @@ Job.prototype = {
     this.status_ = Job.Status.COMPLETED;
     this.stopTimer_();
     this.maybePrintErroringChunks_();
+    this.tidyup_();
     log('Completed job [%s] in %ss.', this.id_, this.runTime_ / 1000);
     console.log('Completed job ['+this.id_+'] in '+(this.runTime_ / 1000)+'s.');
-    this.tidyup_();
   },
 
   maybePrintErroringChunks_: function() {
