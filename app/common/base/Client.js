@@ -2,12 +2,14 @@ var request = require('request');
 var debug = require('debug');
 var ioClient = require('socket.io-client');
 
-var Class = require('base-class-extend');
+var EventEmitter = require('./EventEmitter');
 
-var Client = Class.extend({
+var Client = EventEmitter.extend({
   logName: 'nmr:common:Client',
 
   constructor: function(urlOrSocket) {
+    Client.super_.call(this);
+
     this.log = debug(this.logName);
     this.socket_ = typeof urlOrSocket === 'string' ? ioClient(urlOrSocket) : urlOrSocket;
   },
