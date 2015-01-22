@@ -1,8 +1,7 @@
 # node-map-reduce
 
-Work in progress.
-
-The plan is to create a simple distributed map reduce system using node + javascript.
+A simple distributed map reduce system using node + javascript. It works (on localhost at least), but be warned -
+it is really slow. Only transfer of strings as map values, and reduce memos are supported at the moment.
 
 To run locally: `npm start`
 
@@ -19,5 +18,5 @@ To make a request:
     POST to http://CONTROLLER_ADDRESS:CONTROLLER_PORT/job/new
 
         inputUrl=http://inputfile.com/path/to/input.txt
-        reduceFunction=function(key, values){ return RESULT_FOR_KEY; }
+        reduceFunction=function(memo, values){ return FOLDED_VALUES; }
         mapFunction=function(line) { return {KEY:[VALUE1,VALUE2], KEY2:[VALUE3]}; }
