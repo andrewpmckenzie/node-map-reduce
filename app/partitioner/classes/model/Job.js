@@ -16,6 +16,8 @@ var Job = function(
   if (this.reducerClients_.length === 0) {
     log('ERROR: No reducers provided.');
   }
+
+  this.reducerClients_.forEach(this.decorateReducer_.bind(this));
 };
 
 Job.prototype = {
@@ -25,6 +27,12 @@ Job.prototype = {
     return {
       id: this.id_
     };
+  },
+
+  decorateReducer_: function(reducer) {
+    reducer.on('reduced', function(options) {
+      this.chunkKeyProcessed(options.chunkId, options.key, options.error);
+    }.bind(this));
   },
 
   process: function(chunkId, mappedChunk) {
@@ -39,6 +47,7 @@ Job.prototype = {
 
     this.outstandingChunks_[chunkId] = keys;
 
+    // TODO: if reducer queue is growing too large, send andon signal to controller until it abates
     keys.forEach(function(key) {
       var reducer = stringHash(key) % this.reducerClients_.length;
       this.reducerClients_[reducer].reduce(this.id_, chunkId, key, mappedChunk[key]);

@@ -35,17 +35,11 @@ var PartitionerApp = App.extend({
     this.ioEndpoint(socket, 'job:delete', ['jobId'], this.deleteJob_.bind(this));
   },
 
-  setupReducerSocket: function(socket) {
-    this.ioEndpoint(socket, 'job:kv:reduced', ['jobId', 'chunkId', 'key'], this.handleReducedChunkKey_.bind(this));
-  },
-
   registerJob_: function(options, replyFn) {
     this.log('registerJob_(%o) called.', options);
 
     var reducers = options.reducerAddresses.map(function(address) {
-      var reducer = new ReducerClient(address);
-      this.setupReducerSocket(reducer.socket());
-      return reducer;
+      return new ReducerClient(address);
     }.bind(this));
 
     var job = new Job(options.jobId, reducers, this.controllerClient_);
@@ -68,16 +62,6 @@ var PartitionerApp = App.extend({
   deleteJob_: function(options) {
     this.log('deleteJob_(%o) called.', options);
     this.jobRegistry_.remove(options.jobId);
-  },
-
-  handleReducedChunkKey_: function(options) {
-    this.log('handleReducedChunkKey_(%o) called.', options);
-    var job = this.jobRegistry_.get(options.jobId);
-    if (!job) {
-      this.log('ERROR: could not find job %s to process reduced chunk key.', options.jobId);
-    } else {
-      job.chunkKeyProcessed(options.chunkId, options.key, options.error);
-    }
   }
 });
 
