@@ -1,3 +1,4 @@
+var extend = require('extend');
 var log = require('debug')('nmr:controller:Job');
 var UrlInputReader = require('../helper/UrlInputReader');
 var ChunkRegistry = require('../helper/ChunkRegistry');
@@ -293,11 +294,35 @@ Job.prototype = {
 
   setCompleted_: function() {
     this.status_ = Job.Status.COMPLETED;
-    this.stopTimer_();
     this.maybePrintErroringChunks_();
-    this.tidyup_();
-    log('Completed job [%s] in %ss.', this.id_, this.runTime_ / 1000);
-    console.log('Completed job ['+this.id_+'] in '+(this.runTime_ / 1000)+'s.');
+    this.displayResults_(function() {
+      this.tidyup_();
+      this.stopTimer_();
+      log('Completed job [%s] in %ss.', this.id_, this.runTime_ / 1000);
+      console.log('Completed job [' + this.id_ + '] in '+ (this.runTime_ / 1000) + 's.');
+    }.bind(this));
+  },
+
+  displayResults_: function(cb) {
+    // TODO: save these to a file from the reducers instead of sending everything back
+
+    var reducersRemaining = this.reducers_.length;
+    var result = {};
+
+    this.reducers_.forEach(function(client) {
+      client.results(this.id_, function(partialResult) {
+        reducersRemaining--;
+        result = extend(result, partialResult);
+        if (reducersRemaining === 0) {
+          var keys = Object.keys(result);
+          log('Job returned %s results.', keys.length);
+          keys.forEach(function(k) {
+            console.log(k + '    ' + result[k]);
+          });
+          cb();
+        }
+      });
+    }.bind(this));
   },
 
   maybePrintErroringChunks_: function() {
