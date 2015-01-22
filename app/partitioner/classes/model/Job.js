@@ -37,6 +37,7 @@ Job.prototype = {
 
   process: function(chunkId, mappedChunk) {
     log('process(%s, %o) called.', chunkId, mappedChunk);
+    log('Reducer task queue sizes: %s', this.reducerClients_.map(function(r) { return r.tasksQueued(); }).join(', '));
     var keys = Object.keys(mappedChunk);
 
     if (keys.length === 0) {

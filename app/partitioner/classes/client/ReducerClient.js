@@ -21,6 +21,8 @@ var ReducerClient = Client.extend({
     this.maybeSendNext_();
   },
 
+  tasksQueued: function() { return this.queue_.length; },
+
   maybeSendNext_: function() {
     if (this.numberProcessing_ < MAX_PROCESSING && this.queue_.length > 0) {
       this.send('job:kv:process', this.queue_.pop());
