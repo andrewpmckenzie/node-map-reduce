@@ -4,7 +4,9 @@
 # ./run.sh                                             Standard run
 # MAP_ERROR_FREQUENCY=0.5 ./run.sh                     Run that throw a mapError for 50% of chunks
 
-INPUT_URL="http://localhost:3999/sample_text.txt"
+if [ -z "$INPUT_URL" ]; then
+  echo "$INPUT_URL env var not set"
+fi
 if [ -z "$MAP_ERROR_FREQUENCY" ]; then
   MAP_ERROR_INJECTOR=""
 else
