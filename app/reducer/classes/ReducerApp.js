@@ -34,7 +34,7 @@ var ReducerApp = App.extend({
 
   setupPartitionerSocket: function(socket) {
     var partitionerClient = new PartitionerClient(socket);
-    this.ioEndpoint(socket, 'job:kv:process', ['jobId', 'chunkId', 'key', 'values'], this.processKeyValues_.bind(this, partitionerClient));
+    this.ioEndpoint(socket, 'job:kv:process', ['jobId', 'chunkIds', 'key', 'values'], this.processKeyValues_.bind(this, partitionerClient));
   },
 
   registerJob_: function(options, replyFn) {
@@ -57,7 +57,7 @@ var ReducerApp = App.extend({
     if (!job) {
       this.log('ERROR: could not find job %s to process chunk.', options.jobId);
     } else {
-      job.process(options.chunkId, options.key, options.values, partitionerClient);
+      job.process(options.chunkIds, options.key, options.values, partitionerClient);
     }
   },
 

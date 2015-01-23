@@ -13,7 +13,7 @@ else
 fi
 
 MAP_FUNCTION="function(line) { ${MAP_ERROR_INJECTOR}var words = {}; line.replace(/[^\s\w]/g, '').split(/\s/).forEach(function(w) { w = w.toLowerCase(); words[w] = (words[w] || 0) + 1; }); return words; }"
-REDUCE_FUNCTION="function(memo, values){ return ((memo || 0) * 1) + (values * 1); }"
+REDUCE_FUNCTION="function(memo, values){ return ((memo || 0) * 1) + values.reduce(function(memo, value) { return memo + (value * 1); }, 0); }"
 
 curl --data-urlencode "inputUrl=$INPUT_URL" --data-urlEncode "mapFunction=$MAP_FUNCTION" --data-urlEncode "reduceFunction=$REDUCE_FUNCTION" http://127.0.0.1:3010/job/new
 echo ""

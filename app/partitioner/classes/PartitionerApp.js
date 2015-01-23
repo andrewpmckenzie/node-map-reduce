@@ -39,7 +39,7 @@ var PartitionerApp = App.extend({
     this.log('registerJob_(%o) called.', options);
 
     var reducers = options.reducerAddresses.map(function(address) {
-      return new ReducerClient(address);
+      return new ReducerClient(address, options.jobId);
     }.bind(this));
 
     var job = new Job(options.jobId, reducers, this.controllerClient_);
