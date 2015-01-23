@@ -2,7 +2,7 @@ var util = require('util');
 
 var Client = require('../../../common/base/Client');
 
-var MAX_PROCESSING = 1;
+var MAX_PROCESSING = 10;
 
 var ReducerClient = Client.extend({
   logName: 'nmr:partitioner:ReducerClient',

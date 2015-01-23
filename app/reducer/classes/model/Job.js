@@ -1,8 +1,7 @@
 // https://github.com/mathiasbynens/jsesc
 var jsesc = require('jsesc');
 
-// http://gf3.github.io/sandbox/
-var Sandbox = require('sandbox');
+var vm = require('vm');
 
 var log = require('debug')('nmr:reducer:Job');
 
@@ -14,11 +13,6 @@ var Job = function(
   this.id_ = id  || (function() { throw new Error('id not provided'); })();
   this.reduceFunction_ = reduceFunction || (function() { throw new Error('reduceFunction not provided'); })();
   this.client_ = client;
-
-  // TODO: find an alternative to Sandbox. It is sssslllllooooooowwwwwwwwww.
-  this.sandbox_ = new Sandbox({
-    timeout: 1000 // TODO: make this configurable
-  });
 
   this.results_ = {};
 };
@@ -45,33 +39,31 @@ Job.prototype = {
     var escapedValues = jsesc(values);
 
     // TODO: pass through appropriate types
-    var wrappedFunction = 'JSON.stringify((' + this.reduceFunction_ + ')(\'' + escapedMemo + '\', \'' + escapedValues + '\'))';
+    var wrappedFunction = '(' + this.reduceFunction_ + ')(\'' + escapedMemo + '\', \'' + escapedValues + '\')';
 
-    this.sandbox_.run(wrappedFunction, function(output) {
-      var consoleOutput = output.console;
-      var rawResult = output.result;
-      var errorMessage = null;
-      var didError = false;
+    var result;
+    var errorMessage = null;
+    var didError = false;
 
-      try {
-        var result = JSON.parse(rawResult.replace(/^'/, '').replace(/'$/, ''));
-      } catch(e) {
-        errorMessage = rawResult;
-        didError = true;
-        log('ERROR Bad kv caught: [k] %s, [v] %o, [memo] %o, [chunkId] %s', key, values, memo, chunkId);
-        log('ERROR %s', wrappedFunction);
-        log('ERROR throws %s', errorMessage);
-      }
+    try {
+      var result = vm.runInNewContext(wrappedFunction);
+    } catch(e) {
+      errorMessage = rawResult;
+      didError = true;
+      log('ERROR Bad kv caught: [k] %s, [v] %o, [memo] %o, [chunkId] %s', key, values, memo, chunkId);
+      log('ERROR %s', wrappedFunction);
+      log('ERROR throws %s', errorMessage);
+    }
 
-      log('Processed chunk [%s][%s]: %o', chunkId, key, result);
-      (consoleOutput || []).forEach(function(consoleMessage) { log('  > %s', consoleMessage); });
-      log('Memory state: [%s/%s]', process.memoryUsage().heapUsed, process.memoryUsage().heapTotal);
+    log('Processed chunk [%s][%s]: %o', chunkId, key, result);
+    log('Memory state: [%s/%s]', process.memoryUsage().heapUsed, process.memoryUsage().heapTotal);
 
-      var error = didError ? errorMessage || 'unknown error' : undefined;
-      partitionerClient.reduced(this.id_, chunkId, key, error);
+    var error = didError ? errorMessage || 'unknown error' : undefined;
+    partitionerClient.reduced(this.id_, chunkId, key, error);
 
+    if (!didError) {
       this.results_[key] = result;
-    }.bind(this));
+    }
   },
 
   results: function() {
