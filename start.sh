@@ -1,6 +1,10 @@
 #!/bin/sh
 
+hash node 2>/dev/null || { echo >&2 "node is not installed. You can download and install from http://nodejs.org/.  Aborting."; exit 1; }
+hash grunt 2>/dev/null || { echo >&2 "grunt is not installed. You can install it with npm -g grunt.  Aborting."; exit 1; }
 hash tmux 2>/dev/null || { echo >&2 "tmux is not installed. You can download and install from http://tmux.sourceforge.net/.  Aborting."; exit 1; }
+
+npm install
 
 NAME=node-map-reduce
 export DEBUG=nmr:*
