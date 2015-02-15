@@ -47,7 +47,10 @@ var App = Class.extend({
 
   ioEndpoint: function(socket, event, requiredParams, callback) {
     socket.on(event, function(params, replyFn) {
-      this.verifyParamsExist_(params, requiredParams, event);
+      var err = this.verifyParamsExist_(params, requiredParams, event);
+      if (err) {
+        throw new Error(err);
+      }
       callback(params, replyFn);
     }.bind(this));
   },
@@ -89,9 +92,11 @@ var App = Class.extend({
 
   verifyParamsExist_: function(obj, params, name) {
     var msg = null;
+    obj = obj || {};
     params.forEach(function(param) {
       if (obj[param] === undefined || obj[param] === null) {
         this.log('ERROR: call to %s is missing %s param', name, param);
+        this.log('ERROR: params received: %o', obj);
         msg = param + ' is required';
       }
     }.bind(this));

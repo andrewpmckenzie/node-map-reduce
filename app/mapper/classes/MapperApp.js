@@ -28,7 +28,8 @@ var MapperApp = App.extend({
   setupControllerSocket: function(socket) {
     this.ioEndpoint(socket, 'job:register', ['jobId', 'mapFunction', 'partitionerAddress'], this.registerJob_.bind(this));
     this.ioEndpoint(socket, 'job:delete', ['jobId'], this.deleteJob_.bind(this));
-    this.ioEndpoint(socket, 'job:chunk:process', ['jobId', 'chunkId', 'chunk'], this.processJobChunk_.bind(this));
+    this.ioEndpoint(socket, 'job:finish', ['jobId'], this.finishJob_.bind(this));
+    this.ioEndpoint(socket, 'job:chunk:process', ['jobId', 'chunk'], this.processJobChunk_.bind(this));
   },
 
   registerJob_: function(options, replyFn) {
@@ -45,13 +46,23 @@ var MapperApp = App.extend({
     this.jobRegistry_.remove(options.jobId);
   },
 
+  finishJob_: function(options) {
+    this.log('finishJob_(%o) called.', options);
+    var job = this.jobRegistry_.get(options.jobId);
+    if (!job) {
+      this.log('ERROR: could not find job %s to finish', options.jobId);
+    } else {
+      job.finish();
+    }
+  },
+
   processJobChunk_: function(options) {
     this.log('processJobChunk_(%o) called.', options);
     var job = this.jobRegistry_.get(options.jobId);
     if (!job) {
       this.log('ERROR: could not find job %s to process chunk', options.jobId);
     } else {
-      job.process(options.chunkId, options.chunk);
+      job.process(options.chunk);
     }
   }
 });

@@ -1,3 +1,7 @@
+var _ = require('lodash');
+var util = require('util');
+var EventEmitter = require('events').EventEmitter;
+
 var PartitionerClient = require('../client/PartitionerClient');
 var log = require('debug')('nmr:common:Partitioner');
 
@@ -7,10 +11,14 @@ var Partitioner = function(id, socket, address) {
   this.client_ = new PartitionerClient(socket);
   this.address_ = address;
 
+  this.finishedJobs_ = {};
+
   log('Partitioner %s created.', id);
 };
 
-Partitioner.prototype = {
+util.inherits(Partitioner, EventEmitter);
+
+Partitioner.prototype = _.assign(Partitioner.prototype, {
   id: function() { return this.id_; },
 
   address: function() { return this.address_; },
@@ -33,10 +41,10 @@ Partitioner.prototype = {
     this.client_.deleteJob.apply(this.client_, arguments);
   },
 
-  registerJob: function(jobId, reducerAddresses, onSuccess, onError) {
+  registerJob: function(jobId, reducerAddresses, mapperCount, onSuccess, onError) {
     this.client_.registerJob.apply(this.client_, arguments);
   }
 
-};
+});
 
 module.exports = Partitioner;

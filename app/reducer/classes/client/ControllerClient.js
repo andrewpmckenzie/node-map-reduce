@@ -6,6 +6,10 @@ var ControllerClient = Client.extend({
 
   register: function(address) {
     this.send('reducer:register', {address: address});
+  },
+
+  finished: function(jobId) {
+    this.send('job:finished', {jobId: jobId});
   }
 });
 

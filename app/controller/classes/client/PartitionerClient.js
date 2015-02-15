@@ -4,10 +4,11 @@ var Client = require('../../../common/base/Client');
 var PartitionerClient = Client.extend({
   logName: 'nmr:controller:PartitionerClient',
 
-  registerJob: function(jobId, reducerAddresses, onSuccess, onError) {
+  registerJob: function(jobId, reducerAddresses, mapperCount, onSuccess, onError) {
     this.send('job:register', {
       jobId: jobId,
-      reducerAddresses: reducerAddresses
+      reducerAddresses: reducerAddresses,
+      mapperCount: mapperCount
     }, function(response) {
       // TODO: this seems dangerous. We need some way of verifying the format of the reply
       if (response.error) {

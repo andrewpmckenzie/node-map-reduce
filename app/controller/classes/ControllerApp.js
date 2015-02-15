@@ -27,8 +27,6 @@ var ControllerApp = App.extend({
     this.ioEndpoint(socket, 'mapper:register', ['address'], this.newMapper_.bind(this, socket));
     this.ioEndpoint(socket, 'partitioner:register', ['address'], this.newPartitioner_.bind(this, socket));
     this.ioEndpoint(socket, 'reducer:register', ['address'], this.newReducer_.bind(this, socket));
-    this.ioEndpoint(socket, 'mapper:chunk:processed', ['jobId', 'chunkId'], this.mapperChunkProcessed_.bind(this));
-    this.ioEndpoint(socket, 'reducer:chunk:processed', ['jobId', 'chunkId'], this.reducerChunkProcessed_.bind(this));
   },
 
   setupExpressRoutes: function(express) {
@@ -41,6 +39,9 @@ var ControllerApp = App.extend({
     var id = this.mapperRegistry_.getUniqueId();
     var mapper = new Mapper(id, socket, options.address);
     this.mapperRegistry_.add(mapper);
+
+    this.ioEndpoint(socket, 'mapper:chunk:error', ['jobId', 'chunkData', 'err'], this.mapperChunkError_.bind(this, mapper));
+    this.ioEndpoint(socket, 'mapper:ready', ['jobId'], this.mapperReady_.bind(this, mapper));
   },
 
   newPartitioner_: function(socket, options) {
@@ -55,23 +56,38 @@ var ControllerApp = App.extend({
     var id = this.reducerRegistry_.getUniqueId();
     var reducer = new Reducer(id, socket, options.address);
     this.reducerRegistry_.add(reducer);
+
+    this.ioEndpoint(socket, 'reducer:chunk:error', ['jobId', 'jobData', 'err'], this.reducerChunkError_.bind(this));
+    this.ioEndpoint(socket, 'job:finished', ['jobId'], this.reducerFinished_.bind(this, reducer));
   },
 
-  mapperChunkProcessed_: function(options) {
-    this.log('mapperChunkProcessed_(%o) called.', options);
+  mapperChunkError_: function(mapper, options) {
+    // TODO: send via mapper event
+    this.log('mapperChunkError_(%o) called.', options);
     var job = this.jobRegistry_.get(options.jobId);
     if (job) {
-      job.mapComplete(options.chunkId, options.err);
+      job.mapError(options.chunkData, options.err);
     } else {
       this.log('ERROR: Could not find job [%s] for processed chunk.', options.jobId)
     }
   },
 
-  reducerChunkProcessed_: function(options) {
+  mapperReady_: function(mapper, options) {
+    this.log('mapperReady_(%o) called.', options);
+    mapper.becameAvailable();
+  },
+
+  reducerFinished_: function(reducer, options) {
+    this.log('reducerFinished_(%o) called.', options);
+    reducer.finishedJob(options.jobId);
+  },
+
+  reducerChunkError_: function(options) {
+    // TODO: send via reducer event
     this.log('reducerChunkProcessed_(%o) called.', options);
     var job = this.jobRegistry_.get(options.jobId);
     if (job) {
-      job.reduceComplete(options.chunkId, options.err);
+      job.reduceError(options.jobData, options.err);
     } else {
       this.log('ERROR: Could not find job [%s] for processed chunk.', options.jobId)
     }

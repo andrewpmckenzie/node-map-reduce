@@ -25,10 +25,15 @@ var MapperClient = Client.extend({
     });
   },
 
-  process: function(jobId, chunkId, chunk) {
+  finishJob: function(jobId) {
+    this.send('job:finish', {
+      jobId: jobId
+    });
+  },
+
+  process: function(jobId, chunk) {
     this.send('job:chunk:process', {
       jobId: jobId,
-      chunkId: chunkId,
       chunk: chunk
     });
   }

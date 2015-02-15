@@ -4,8 +4,8 @@ var Client = require('../../../common/base/Client');
 var PartitionerClient = Client.extend({
   logName: 'nmr:reducer:PartitionerClient',
 
-  reduced: function(jobId, chunkIds, key, error) {
-    this.send('job:kv:reduced', {jobId: jobId, chunkIds: chunkIds, key: key, error: error});
+  reduced: function(jobId, key, error) {
+    this.send('job:kv:reduced', {jobId: jobId, key: key, error: error});
   }
 });
 

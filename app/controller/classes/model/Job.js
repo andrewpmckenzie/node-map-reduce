@@ -1,8 +1,6 @@
 var extend = require('extend');
 var log = require('debug')('nmr:controller:Job');
 var UrlInputReader = require('../helper/UrlInputReader');
-var ChunkRegistry = require('../helper/ChunkRegistry');
-var Chunk = require('./Chunk');
 
 var Job = function(
     id,
@@ -27,13 +25,14 @@ var Job = function(
   this.startTime_ = null;
   this.endTime_ = null;
 
-  this.chunkRegistry_ = new ChunkRegistry();
-  this.erroringChunkThreshold_ = 10; // TODO: don't hardcode this
-
   this.rawChunkQueue_ = [];
   this.error_ = undefined;
 
   this.status_ = Job.Status.STARTING;
+  this.mappingFinished_ = false;
+  this.partitioningFinished_ = false;
+  this.reducingFinished_ = false;
+
   this.inputReader_ = new UrlInputReader(this.inputUrl_, this.chunkDelimiter_);
   this.inputReader_.onChunks(this.handleChunks_.bind(this));
   this.inputReader_.onDone(this.handleReadDone_.bind(this));
@@ -46,6 +45,14 @@ var Job = function(
   if (this.reducers_.length === 0) {
     this.setError_('No reducers available.');
   }
+
+  this.mappers_.forEach(function(mapper) {
+    mapper.on('available', this.maybeCompleteOrResume_.bind(this));
+  }.bind(this));
+
+  this.reducers_.forEach(function(reducer) {
+    reducer.on('job:' + this.id_ + ':finished', this.maybeReducingFinished_.bind(this));
+  }.bind(this));
 };
 
 Job.prototype = {
@@ -111,9 +118,10 @@ Job.prototype = {
 
     // TODO: handle case where could not register with all reducers
     var reducerAddresses = this.reducers_.map(function(reducer) { return reducer.address(); });
-    this.partitioner_.registerJob(this.id_, reducerAddresses, registrationSuccess, partitionerRegistrationError);
+    this.partitioner_.registerJob(this.id_, reducerAddresses, this.mappers_.length, registrationSuccess, partitionerRegistrationError);
 
     var mapperRegistrationError = function(mapperId) {
+      // TODO: alert partitioner of new mapper count
       log('Error registering with mapper ' + mapperId);
       repliesRemaining--;
       this.mappers_ = this.mappers_.filter(function(mapper) { return mapperId !== mapper.id(); });
@@ -176,15 +184,9 @@ Job.prototype = {
     if (typeof rawChunk !== 'string') {
       log('Ignoring bad chunk: ' + rawChunk);
     } else if (availableMapper) {
-      var chunk = new Chunk(
-        this.chunkRegistry_.getUniqueId(),
-        rawChunk
-      );
-      chunk.setMapping(availableMapper);
-      this.chunkRegistry_.add(chunk);
 
-      log('Sending chunk [%s] to mapper [%s]: %s', chunk.id(), availableMapper.id(), rawChunk);
-      availableMapper.process(this.id_, chunk.id(), rawChunk);
+      log('Sending chunk to mapper [%s]: %s', availableMapper.id(), rawChunk);
+      availableMapper.process(this.id_, rawChunk);
       return true;
     } else {
       log('No mappers available. Pausing stream.');
@@ -210,81 +212,43 @@ Job.prototype = {
     return this.mappers_.filter(function(mapper) { return mapper.isAvailable(); })[0];
   },
 
-  mapComplete: function(chunkId, err) {
-    var chunk = this.chunkRegistry_.get(chunkId);
-
-    if (!chunk) {
-      log('ERROR: Chunk [%s] not found.', chunkId);
-      return;
-    }
+  mapError: function(chunkData, errMsg) {
 
     if (this.status_ !== Job.Status.RUNNING) {
-      log('ERROR: Mapper reported completion of chunk [%s] while job in %s state.', chunkId, this.status_);
+      log('ERROR: Mapper reported chunk error while job in %s state.', this.status_);
       return;
     }
 
-    log('Mapping of chunk [%s] complete.', chunkId);
+    log('ERROR: Mapping of chunk errored.');
+    log('ERROR: Chunk data: %s', chunkData);
+    log('ERROR: Message: %s', errMsg);
     log('Memory state: [%s/%s]', process.memoryUsage().heapUsed, process.memoryUsage().heapTotal);
-
-    // TODO: change these lines to reflect reducing state once we have reducers
-    if (err) {
-      chunk.setError('mapping', err);
-    } else {
-      chunk.setReducing();
-    }
-    this.chunkRegistry_.tidy();
-
-    this.maybeError_();
-    this.maybeCompleteOrResume_();
+    this.setError_('Error while mapping "' + chunkData + '": ' + errMsg);
   },
 
-  reduceComplete: function(chunkId, err) {
-    var chunk = this.chunkRegistry_.get(chunkId);
-
-    if (!chunk) {
-      log('ERROR: Chunk [%s] not found.', chunkId);
-      return;
-    }
+  reduceError: function(erroringObj, errMsg) {
 
     if (this.status_ !== Job.Status.RUNNING) {
-      log('ERROR: Reducer reported completion of chunk [%s] while job in %s state.', chunkId, this.status_);
+      log('ERROR: Reducer reported error while job in %s state.', this.status_);
       return;
     }
 
-    log('Reducing of chunk [%s] complete.', chunkId);
+    var objJson = JSON.stringify(erroringObj);
+
+    log('ERROR: Reducing errored.');
+    log('ERROR: Chunk data: %s', objJson);
+    log('ERROR: Message: %s', errMsg);
     log('Memory state: [%s/%s]', process.memoryUsage().heapUsed, process.memoryUsage().heapTotal);
 
-    // TODO: change these lines to reflect reducing state once we have reducers
-    if (err) {
-      chunk.setError('reducing', err);
-    } else {
-      chunk.setDone();
-    }
-    this.chunkRegistry_.tidy();
-
-    this.maybeError_();
-    this.maybeCompleteOrResume_();
+    this.setError_('Error while reducing ' + objJson + ': ' + errMsg);
   },
 
   maybeCompleteOrResume_: function() {
     if (this.inputFinished_ && !this.rawChunkQueue_.length) {
-      var chunksProcessing = this.chunkRegistry_.numberOfItems();
-      if (chunksProcessing > 0) {
-        log('Almost done. Waiting on %s chunks to finish.', chunksProcessing);
-      } else {
-        log('Nothing left to do!');
-        this.setCompleted_();
-      }
+      var jobId = this.id_;
+      this.mappers_.forEach(function(mapper) { mapper.finishJob(jobId); });
     } else {
       this.maybeResumeRead_();
-    }
-  },
-
-  maybeError_: function() {
-    var erroringChunks = this.chunkRegistry_.erroringChunks();
-    if (erroringChunks.length > this.erroringChunkThreshold_) {
-      var message = 'Number of erroring chunks (' + erroringChunks.length + ') is greater than allowed amount (' + this.erroringChunkThreshold_ + ').';
-      this.setError_(message);
     }
   },
 
@@ -292,9 +256,19 @@ Job.prototype = {
     this.inputFinished_ = true;
   },
 
+  maybeReducingFinished_: function() {
+    log('maybeReducingFinished_() called.');
+    var jobId = this.id_;
+    var remaining = this.reducers_.reduce(function(m, reducer) { return m + (reducer.isFinished(jobId) ? 0 : 1); }, 0);
+    if (remaining === 0) {
+      this.setCompleted_();
+    } else {
+      log('Waiting on %s reducers.', remaining);
+    }
+  },
+
   setCompleted_: function() {
     this.status_ = Job.Status.COMPLETED;
-    this.maybePrintErroringChunks_();
     this.displayResults_(function() {
       this.tidyup_();
       this.stopTimer_();
@@ -325,16 +299,6 @@ Job.prototype = {
     }.bind(this));
   },
 
-  maybePrintErroringChunks_: function() {
-    var erroringChunks = this.chunkRegistry_.erroringChunks();
-    if (erroringChunks.length) {
-      log('ERROR Job [%s] could not proccess these chunks:', this.id_);
-      erroringChunks.forEach(function(chunk) {
-        log('ERROR  - %o', chunk.error());
-      });
-    }
-  },
-
   stopTimer_: function() {
     this.endTime_ = +new Date();
     this.runTime_ = this.endTime_ - this.startTime_;
@@ -348,7 +312,6 @@ Job.prototype = {
     this.status_ = Job.Status.ERROR;
     this.error_ = message;
     this.stopTimer_();
-    this.maybePrintErroringChunks_();
     log('ERROR Job [%s] errored after %ss: ', this.id_, this.runTime_ / 1000, message);
     console.log('ERROR Job ['+this.id_+'] errored after '+(this.runTime_ / 1000)+'s: ', message);
     this.tidyup_();

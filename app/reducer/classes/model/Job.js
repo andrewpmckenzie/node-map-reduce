@@ -13,6 +13,7 @@ var Job = function(
   this.id_ = id  || (function() { throw new Error('id not provided'); })();
   this.reduceFunction_ = reduceFunction || (function() { throw new Error('reduceFunction not provided'); })();
   this.client_ = client;
+  this.finished_ = false;
 
   this.results_ = {};
 };
@@ -29,8 +30,8 @@ Job.prototype = {
     };
   },
 
-  process: function(chunkIds, key, values, partitionerClient) {
-    log('process(%o, %s, %o) called', chunkIds, key, values);
+  process: function(key, values, partitionerClient) {
+    log('process(%s, %o) called', key, values);
 
     var memo = this.results_[key];
 
@@ -50,16 +51,16 @@ Job.prototype = {
     } catch(e) {
       errorMessage = rawResult;
       didError = true;
-      log('ERROR Bad kv caught: [k] %s, [v] %o, [memo] %o, [chunkId] %s', key, values, memo, chunkId);
+      log('ERROR Bad kv caught: [k] %s, [v] %o, [memo] %o', key, values, memo);
       log('ERROR %s', wrappedFunction);
       log('ERROR throws %s', errorMessage);
     }
 
-    log('Processed chunks %s:%o: %o', key, chunkIds, result);
+    log('Processed chunks %s: %o', key, result);
     log('Memory state: [%s/%s]', process.memoryUsage().heapUsed, process.memoryUsage().heapTotal);
 
     var error = didError ? errorMessage || 'unknown error' : undefined;
-    partitionerClient.reduced(this.id_, chunkIds, key, error);
+    partitionerClient.reduced(this.id_, key, error);
 
     if (!didError) {
       this.results_[key] = result;
@@ -68,6 +69,14 @@ Job.prototype = {
 
   results: function() {
     return this.results_;
+  },
+
+  finish: function() {
+    // TODO: verify we're not still processing anything
+    // (this works at the moment because we only process 1 job at a time)
+    log('Finished job %s.', this.id_);
+    this.finished_ = true;
+    this.client_.finished(this.id_);
   }
 };
 

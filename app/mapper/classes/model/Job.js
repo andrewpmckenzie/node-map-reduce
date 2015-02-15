@@ -16,6 +16,7 @@ var Job = function(
   this.partitionerAddress_ = partitionerAddress || (function() { throw new Error('partitionerAddress not provided'); })();
   this.controllerClient_ = controllerClient;
   this.partitionerClient_ = new PartitionerClient(this.partitionerAddress_);
+  this.finished_ = false;
 };
 
 Job.prototype = {
@@ -30,8 +31,20 @@ Job.prototype = {
     };
   },
 
-  process: function(chunkId, chunkData) {
-    log('process(%s, \"%s\") called', chunkId, chunkData.length > 10 ? chunkData.substr(0, 10) + '...' : chunkData);
+  finish: function() {
+    // TODO: verify we're not still processing anything
+    // (this works at the moment because we only process 1 job at a time)
+    this.finished_ = true;
+    this.partitionerClient_.finish(this.id_);
+  },
+
+  process: function(chunkData) {
+    if (this.finished_) {
+      log('ERROR chunk received after job finished.');
+      return;
+    }
+
+    log('process(\"%s\") called', chunkData.length > 10 ? chunkData.substr(0, 10) + '...' : chunkData);
     var escapedData = jsesc(chunkData);
     var wrappedFunction = '(' + this.mapFunction_ + ')(\'' + escapedData + '\')';
 
@@ -46,14 +59,16 @@ Job.prototype = {
       log('ERROR Bad chunk caught: %s', chunkData);
       log('ERROR %s', wrappedFunction);
       log('ERROR throws %s', errorMessage);
+      this.controllerClient_.chunkError(this.id_, chunkData, errorMessage);
     }
 
-    log('Processed chunk [%s]: %o', chunkId, result);
+    log('Processed chunk "%s": %o', chunkData, result);
     log('Memory state: [%s/%s]', process.memoryUsage().heapUsed, process.memoryUsage().heapTotal);
 
-    this.controllerClient_.chunkProcessed(this.id_, chunkId, errorMessage);
+    this.controllerClient_.ready(this.id_);
+
     if (!didError) {
-      this.partitionerClient_.partition(this.id_, chunkId, result);
+      this.partitionerClient_.partition(this.id_, result);
     }
   }
 };

@@ -4,8 +4,12 @@ var Client = require('../../../common/base/Client');
 var PartitionerClient = Client.extend({
   logName: 'nmr:mapper:PartitionerClient',
 
-  partition: function(jobId, chunkId, payload) {
-    this.send('chunk:partition', {jobId: jobId, chunkId: chunkId, payload: payload});
+  partition: function(jobId, payload) {
+    this.send('chunk:partition', {jobId: jobId, payload: payload});
+  },
+
+  finish: function(jobId) {
+    this.send('job:finish', {jobId: jobId});
   }
 });
 

@@ -27,11 +27,12 @@ var PartitionerApp = App.extend({
   },
 
   setupMapperSocket: function(socket) {
-    this.ioEndpoint(socket, 'chunk:partition', ['jobId', 'chunkId', 'payload'], this.handleMappedChunk_.bind(this));
+    this.ioEndpoint(socket, 'chunk:partition', ['jobId', 'payload'], this.handleMappedChunk_.bind(this));
+    this.ioEndpoint(socket, 'job:finish', ['jobId'], this.finishJob_.bind(this));
   },
 
   setupControllerSocket: function(socket) {
-    this.ioEndpoint(socket, 'job:register', ['jobId', 'reducerAddresses'], this.registerJob_.bind(this));
+    this.ioEndpoint(socket, 'job:register', ['jobId', 'reducerAddresses', 'mapperCount'], this.registerJob_.bind(this));
     this.ioEndpoint(socket, 'job:delete', ['jobId'], this.deleteJob_.bind(this));
   },
 
@@ -42,7 +43,7 @@ var PartitionerApp = App.extend({
       return new ReducerClient(address, options.jobId);
     }.bind(this));
 
-    var job = new Job(options.jobId, reducers, this.controllerClient_);
+    var job = new Job(options.jobId, options.mapperCount, reducers, this.controllerClient_);
     this.jobRegistry_.add(job);
     replyFn({
       success: true
@@ -55,7 +56,17 @@ var PartitionerApp = App.extend({
     if (!job) {
       this.log('ERROR: could not find job %s to process chunk.', options.jobId);
     } else {
-      job.process(options.chunkId, options.payload);
+      job.process(options.payload);
+    }
+  },
+
+  finishJob_: function(options) {
+    this.log('finishJob_(%o) called.', options);
+    var job = this.jobRegistry_.get(options.jobId);
+    if (!job) {
+      this.log('ERROR: could not find job %s to finish.', options.jobId);
+    } else {
+      job.mapperFinished();
     }
   },
 
