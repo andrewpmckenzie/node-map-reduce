@@ -2,7 +2,6 @@ var util = require("util");
 
 var App = require('../../common/base/App');
 var Job = require('./model/Job');
-var JobRegistry = require('./helper/JobRegistry');
 var MapperRegistry = require('./helper/MapperRegistry');
 var Mapper = require('./model/Mapper');
 var PartitionerRegistry = require('./helper/PartitionerRegistry');
@@ -17,7 +16,6 @@ var ControllerApp = App.extend({
     ControllerApp.super_.apply(this, arguments);
     this.log('ControllerApp(' + port + ') called.');
 
-    this.jobRegistry_ = new JobRegistry();
     this.mapperRegistry_ = new MapperRegistry();
     this.partitionerRegistry_ = new PartitionerRegistry();
     this.reducerRegistry_ = new ReducerRegistry();
@@ -42,6 +40,8 @@ var ControllerApp = App.extend({
 
     this.ioEndpoint(socket, 'mapper:chunk:error', ['jobId', 'chunkData', 'err'], this.mapperChunkError_.bind(this, mapper));
     this.ioEndpoint(socket, 'mapper:ready', ['jobId'], this.mapperReady_.bind(this, mapper));
+
+    this.frontendClients_.forEach(function(client) { client.registerMapper(mapper); });
   },
 
   newPartitioner_: function(socket, options) {
@@ -49,6 +49,8 @@ var ControllerApp = App.extend({
     var id = this.partitionerRegistry_.getUniqueId();
     var partitioner = new Partitioner(id, socket, options.address);
     this.partitionerRegistry_.add(partitioner);
+
+    this.frontendClients_.forEach(function(client) { client.registerPartitioner(partitioner); });
   },
 
   newReducer_: function(socket, options) {
@@ -59,16 +61,16 @@ var ControllerApp = App.extend({
 
     this.ioEndpoint(socket, 'reducer:chunk:error', ['jobId', 'jobData', 'err'], this.reducerChunkError_.bind(this));
     this.ioEndpoint(socket, 'job:finished', ['jobId'], this.reducerFinished_.bind(this, reducer));
+
+    this.frontendClients_.forEach(function(client) { client.registerReducer(reducer); });
   },
 
   mapperChunkError_: function(mapper, options) {
     // TODO: send via mapper event
     this.log('mapperChunkError_(%o) called.', options);
-    var job = this.jobRegistry_.get(options.jobId);
+    var job = this.getJob(options.jobId);
     if (job) {
       job.mapError(options.chunkData, options.err);
-    } else {
-      this.log('ERROR: Could not find job [%s] for processed chunk.', options.jobId)
     }
   },
 
@@ -85,17 +87,15 @@ var ControllerApp = App.extend({
   reducerChunkError_: function(options) {
     // TODO: send via reducer event
     this.log('reducerChunkProcessed_(%o) called.', options);
-    var job = this.jobRegistry_.get(options.jobId);
+    var job = this.getJob(options.jobId);
     if (job) {
       job.reduceError(options.jobData, options.err);
-    } else {
-      this.log('ERROR: Could not find job [%s] for processed chunk.', options.jobId)
     }
   },
 
   newJob_: function(options) {
     this.log('newJob_(%o) called.', options);
-    var id = this.jobRegistry_.getUniqueId();
+    var id = this.getUniqueJobId();
 
     // TODO: throttle mappers/reducers passed
     var mappers = this.mapperRegistry_.getAll();
@@ -113,7 +113,7 @@ var ControllerApp = App.extend({
         reducers,
         partitioner
     );
-    this.jobRegistry_.add(job);
+    this.addJob(job);
     job.start();
 
     return job.toJson();
@@ -121,13 +121,20 @@ var ControllerApp = App.extend({
 
   jobDetail_: function(options) {
     this.log('jobDetail_(%o) called.', options);
-    var job = this.jobRegistry_.get(options.jobId);
+    var job = this.getJob(options.jobId);
 
     if (job) {
       return job.toJson();
-    } else {
-      throw new Error('Could not find job ' + options.jobId);
     }
+  },
+
+  newFrontend_: function(socket, options) {
+    this.log('newFrontend_(socket, %o) called.', options);
+    var frontendClient = ControllerApp.super_.prototype.newFrontend_.call(this, socket, options);
+
+    this.partitionerRegistry_.getAll().forEach(function(partitioner) { frontendClient.registerPartitioner(partitioner); });
+    this.mapperRegistry_.getAll().forEach(function(mapper) { frontendClient.registerMapper(mapper); });
+    this.reducerRegistry_.getAll().forEach(function(reducer) { frontendClient.registerReducer(reducer); });
   }
 });
 
