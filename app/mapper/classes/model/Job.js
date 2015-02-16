@@ -1,45 +1,46 @@
 // https://github.com/mathiasbynens/jsesc
 var jsesc = require('jsesc');
-var vm = require('vm');
-
 var log = require('debug')('nmr:mapper:Job');
+var vm = require('vm');
+var _ = require('lodash');
+
+var JobBase = require('../../../common/model/Job');
 var PartitionerClient = require('../client/PartitionerClient');
 
-var Job = function(
+var Job = JobBase.extend({
+
+  constructor: function(
     id,
     mapFunction,
     partitionerAddress,
     controllerClient
-) {
-  this.id_ = id  || (function() { throw new Error('id not provided'); })();
-  this.mapFunction_ = mapFunction || (function() { throw new Error('mapFunction not provided'); })();
-  this.partitionerAddress_ = partitionerAddress || (function() { throw new Error('partitionerAddress not provided'); })();
-  this.controllerClient_ = controllerClient;
-  this.partitionerClient_ = new PartitionerClient(this.partitionerAddress_);
-  this.finished_ = false;
-};
+  ) {
+    Job.super_.call(this, id);
 
-Job.prototype = {
-  id: function() { return this.id_; },
+    this.mapFunction_ = mapFunction || (function() { throw new Error('mapFunction not provided'); })();
+    this.partitionerAddress_ = partitionerAddress || (function() { throw new Error('partitionerAddress not provided'); })();
+    this.controllerClient_ = controllerClient;
+    this.partitionerClient_ = new PartitionerClient(this.partitionerAddress_);
+    this.mapCount_ = 0;
+  },
 
   toJson: function() {
-    return {
-      id: this.id_,
-      options: {
-        mapFunction: this.mapFunction_
-      }
-    };
+    return _.extend(Job.super_.prototype.toJson.call(this), {
+      mapFunction: this.mapFunction_
+    });
   },
 
-  finish: function() {
-    // TODO: verify we're not still processing anything
-    // (this works at the moment because we only process 1 job at a time)
-    this.finished_ = true;
-    this.partitionerClient_.finish(this.id_);
+  // Because we're only processing a single mapping at a time
+  canFinish: function() { return true; },
+
+  bubbleFinish: function() { 
+    this.partitionerClient_.finish(this.id()); 
   },
+
+  generateStats: function() { return { mapped: this.mapCount_ }; },
 
   process: function(chunkData) {
-    if (this.finished_) {
+    if (this.isFinished()) {
       log('ERROR chunk received after job finished.');
       return;
     }
@@ -59,18 +60,20 @@ Job.prototype = {
       log('ERROR Bad chunk caught: %s', chunkData);
       log('ERROR %s', wrappedFunction);
       log('ERROR throws %s', errorMessage);
-      this.controllerClient_.chunkError(this.id_, chunkData, errorMessage);
+      this.controllerClient_.chunkError(this.id(), chunkData, errorMessage);
     }
 
     log('Processed chunk "%s": %o', chunkData, result);
     log('Memory state: [%s/%s]', process.memoryUsage().heapUsed, process.memoryUsage().heapTotal);
 
-    this.controllerClient_.ready(this.id_);
+    this.controllerClient_.ready(this.id());
 
     if (!didError) {
-      this.partitionerClient_.partition(this.id_, result);
+      this.partitionerClient_.partition(this.id(), result);
+      this.mapCount_++;
     }
   }
-};
+
+});
 
 module.exports = Job;
