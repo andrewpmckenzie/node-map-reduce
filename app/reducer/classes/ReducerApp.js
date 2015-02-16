@@ -3,7 +3,6 @@ var util = require("util");
 var App = require('../../common/base/App');
 var ControllerClient = require('./client/ControllerClient');
 var PartitionerClient = require('./client/PartitionerClient');
-var JobRegistry = require('./helper/JobRegistry');
 var Job = require('./model/Job');
 
 var ReducerApp = App.extend({
@@ -13,7 +12,6 @@ var ReducerApp = App.extend({
     ReducerApp.super_.apply(this, arguments);
     this.log('ReducerApp(%s, %s) called.', port, controllerUrl);
 
-    this.jobRegistry_ = new JobRegistry();
     this.controllerClient_ = new ControllerClient(controllerUrl);
     this.setupControllerSocket(this.controllerClient_.socket());
 
@@ -41,7 +39,7 @@ var ReducerApp = App.extend({
   registerJob_: function(options, replyFn) {
     this.log('registerJob_(%o) called.', options);
     var job = new Job(options.jobId, options.reduceFunction, this.controllerClient_);
-    this.jobRegistry_.add(job);
+    this.addJob(job);
     replyFn({
       success: true
     });
@@ -49,35 +47,29 @@ var ReducerApp = App.extend({
 
   deleteJob_: function(options) {
     this.log('deleteJob_(%o) called.', options);
-    this.jobRegistry_.remove(options.jobId);
+    this.removeJob(options.jobId);
   },
 
   processKeyValues_: function(partitionerClient, options) {
     this.log('processKeyValues_(%o) called.', options);
-    var job = this.jobRegistry_.get(options.jobId);
-    if (!job) {
-      this.log('ERROR: could not find job %s to process chunk.', options.jobId);
-    } else {
+    var job = this.getJob(options.jobId);
+    if (job) {
       job.process(options.key, options.values, partitionerClient);
     }
   },
 
   getResults_: function(options, cb) {
     this.log('getResults_(%o) called.', options);
-    var job = this.jobRegistry_.get(options.jobId);
-    if (!job) {
-      this.log('ERROR: could not find job %s to get results.', options.jobId);
-    } else {
+    var job = this.getJob(options.jobId);
+    if (job) {
       cb(job.results());
     }
   },
 
   finish_: function(options) {
     this.log('finish_(%o) called.', options);
-    var job = this.jobRegistry_.get(options.jobId);
-    if (!job) {
-      this.log('ERROR: could not find job %s to finish.', options.jobId);
-    } else {
+    var job = this.getJob(options.jobId);
+    if (job) {
       job.finish();
     }
   }
