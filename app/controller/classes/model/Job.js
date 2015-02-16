@@ -1,8 +1,14 @@
+var _ = require('lodash');
 var extend = require('extend');
 var log = require('debug')('nmr:controller:Job');
-var UrlInputReader = require('../helper/UrlInputReader');
+var util = require('util');
 
-var Job = function(
+var EventEmitter = require('events').EventEmitter;
+var UrlInputReader = require('../helper/UrlInputReader');
+var JobBase = require('../../../common/model/Job');
+
+var Job = JobBase.extend({
+  constructor: function(
     id,
     inputUrl,
     reduceFunction,
@@ -11,81 +17,82 @@ var Job = function(
     mappers,
     reducers,
     partitioner
-) {
-  this.id_ = id  || (function() { throw new Error('id not provided'); })();
-  this.inputUrl_ = inputUrl || (function() { throw new Error('inputUrl not provided'); })();
-  this.reduceFunction_ = reduceFunction || (function() { throw new Error('reduceFunction not provided'); })();
-  this.mapFunction_ = mapFunction || (function() { throw new Error('mapFunction not provided'); })();
-  this.mappers_ = mappers || (function() { throw new Error('mappers not provided'); })();
-  this.reducers_ = reducers || (function() { throw new Error('reducers not provided'); })();
-  this.partitioner_ = partitioner || (function() { throw new Error('partitioner not provided'); })();
-  this.chunkDelimiter_ = chunkDelimiter || '\n';
-  this.inputFinished_ = false;
+  ) {
+    Job.super_.call(this, id);
 
-  this.startTime_ = null;
-  this.endTime_ = null;
+    this.inputUrl_ = inputUrl || (function() { throw new Error('inputUrl not provided'); })();
+    this.reduceFunction_ = reduceFunction || (function() { throw new Error('reduceFunction not provided'); })();
+    this.mapFunction_ = mapFunction || (function() { throw new Error('mapFunction not provided'); })();
+    this.mappers_ = mappers || (function() { throw new Error('mappers not provided'); })();
+    this.reducers_ = reducers || (function() { throw new Error('reducers not provided'); })();
+    this.partitioner_ = partitioner || (function() { throw new Error('partitioner not provided'); })();
+    this.chunkDelimiter_ = chunkDelimiter || '\n';
 
-  this.rawChunkQueue_ = [];
-  this.error_ = undefined;
+    this.rawChunkQueue_ = [];
+    this.error_ = undefined;
+    this.result_ = null;
 
-  this.status_ = Job.Status.STARTING;
-  this.mappingFinished_ = false;
-  this.partitioningFinished_ = false;
-  this.reducingFinished_ = false;
+    this.status_ = Job.Status.STARTING;
 
-  this.inputReader_ = new UrlInputReader(this.inputUrl_, this.chunkDelimiter_);
-  this.inputReader_.onChunks(this.handleChunks_.bind(this));
-  this.inputReader_.onDone(this.handleReadDone_.bind(this));
-  this.inputReader_.onError(this.handleReadError_.bind(this));
+    this.inputReader_ = new UrlInputReader(this.inputUrl_, this.chunkDelimiter_);
+    this.inputReader_.onChunks(this.handleChunks_.bind(this));
+    this.inputReader_.onDone(this.finish.bind(this));
+    this.inputReader_.onError(this.handleReadError_.bind(this));
 
-  if (this.mappers_.length === 0) {
-    this.setError_('No mappers available.');
-  }
+    if (this.mappers_.length === 0) {
+      this.setError_('No mappers available.');
+    }
 
-  if (this.reducers_.length === 0) {
-    this.setError_('No reducers available.');
-  }
+    if (this.reducers_.length === 0) {
+      this.setError_('No reducers available.');
+    }
 
-  this.mappers_.forEach(function(mapper) {
-    mapper.on('available', this.maybeCompleteOrResume_.bind(this));
-  }.bind(this));
+    this.mappers_.forEach(function(mapper) {
+      mapper.on('available', this.maybeResumeRead_.bind(this));
+    }.bind(this));
 
-  this.reducers_.forEach(function(reducer) {
-    reducer.on('job:' + this.id_ + ':finished', this.maybeReducingFinished_.bind(this));
-  }.bind(this));
-};
-
-Job.prototype = {
-  id: function() { return this.id_; },
+    this.reducers_.forEach(function(reducer) {
+      reducer.on('job:' + this.id_ + ':finished', this.maybeReducingFinished_.bind(this));
+    }.bind(this));
+  },
 
   status: function() { return this.status_; },
 
   toJson: function() {
-    return {
-      id: this.id_,
+    return _.extend(Job.super_.prototype.toJson.call(this), {
       status: this.status_,
       error: this.error_,
+      result: this.result_,
+      runTime: this.runTime_,
       options: {
         inputUrl: this.inputUrl_,
         reduceFunction: this.reduceFunction_,
         mapFunction: this.mapFunction_,
         chunkDelimiter: this.chunkDelimiter_
       }
-    };
+    });
   },
 
   start: function() {
-    this.startTime_ = +new Date();
-    this.registerJobWithNodes_(
-      this.startInputStream_.bind(this)
-    );
+    this.registerJobWithNodes_(this.startInputStream_.bind(this));
+  },
+
+  canFinish: function() {
+    // Make sure there are no chunks queued up to send
+    this.maybeResumeRead_();
+    return !this.rawChunkQueue_.length;
+  },
+
+  bubbleFinish: function() {
+    var jobId = this.id_;
+    this.mappers_.forEach(function(mapper) { mapper.finishJob(jobId); });
   },
 
   registerJobWithNodes_: function(onDone) {
     log('registerJobWithNodes_() called.');
 
-    if (this.error_) {
-      log('Stopping as Job is in error state');
+    if (this.status_ !== Job.Status.STARTING) {
+      log('ERROR: Stopping as Job is in %s state', this.status_);
       return;
     }
 
@@ -153,13 +160,13 @@ Job.prototype = {
   startInputStream_: function() {
     log('startInputStream_() called.');
 
-    if (this.error_) {
-      log('Stopping as Job is in error state');
+    if (this.status_ !== Job.Status.STARTING) {
+      log('ERROR: Stopping as Job is in %s state', this.status_);
       return;
     }
 
     this.inputReader_.read();
-    this.status_ = Job.Status.RUNNING;
+    this.updateStatus_(Job.Status.RUNNING);
   },
 
   handleChunks_: function(chunks) {
@@ -184,7 +191,6 @@ Job.prototype = {
     if (typeof rawChunk !== 'string') {
       log('Ignoring bad chunk: ' + rawChunk);
     } else if (availableMapper) {
-
       log('Sending chunk to mapper [%s]: %s', availableMapper.id(), rawChunk);
       availableMapper.process(this.id_, rawChunk);
       return true;
@@ -198,9 +204,8 @@ Job.prototype = {
   },
 
   maybeResumeRead_: function() {
-    while (this.maybeSendChunkToMapper_(this.rawChunkQueue_.pop())) {
-      // no-op
-    }
+    while (this.maybeSendChunkToMapper_(this.rawChunkQueue_.pop())) { /* no-op */ }
+
     if (this.rawChunkQueue_.length === 0) {
       log('No chunks left in local queue. Resuming stream.');
       this.inputReader_.resume();
@@ -243,19 +248,6 @@ Job.prototype = {
     this.setError_('Error while reducing ' + objJson + ': ' + errMsg);
   },
 
-  maybeCompleteOrResume_: function() {
-    if (this.inputFinished_ && !this.rawChunkQueue_.length) {
-      var jobId = this.id_;
-      this.mappers_.forEach(function(mapper) { mapper.finishJob(jobId); });
-    } else {
-      this.maybeResumeRead_();
-    }
-  },
-
-  handleReadDone_: function() {
-    this.inputFinished_ = true;
-  },
-
   maybeReducingFinished_: function() {
     log('maybeReducingFinished_() called.');
     var jobId = this.id_;
@@ -268,12 +260,10 @@ Job.prototype = {
   },
 
   setCompleted_: function() {
-    this.status_ = Job.Status.COMPLETED;
     this.displayResults_(function() {
+      this.updateStatus_(Job.Status.COMPLETED);
       this.tidyup_();
-      this.stopTimer_();
-      log('Completed job [%s] in %ss.', this.id_, this.runTime_ / 1000);
-      console.log('Completed job [' + this.id_ + '] in '+ (this.runTime_ / 1000) + 's.');
+      console.log('Completed job [' + this.id_ + '] in '+ (((+new Date()) - this.startTime_) / 1000) + 's.');
     }.bind(this));
   },
 
@@ -288,6 +278,8 @@ Job.prototype = {
         reducersRemaining--;
         result = extend(result, partialResult);
         if (reducersRemaining === 0) {
+          this.result_ = result;
+          this.update();
           var keys = Object.keys(result);
           log('Job returned %s results.', keys.length);
           keys.forEach(function(k) {
@@ -295,26 +287,22 @@ Job.prototype = {
           });
           cb();
         }
-      });
+      }.bind(this));
     }.bind(this));
   },
 
-  stopTimer_: function() {
-    this.endTime_ = +new Date();
-    this.runTime_ = this.endTime_ - this.startTime_;
-  },
-
-  handleReadError_: function(message) {
-    this.setError_(message);
-  },
+  handleReadError_: function(message) { this.setError_(message); },
 
   setError_: function(message) {
-    this.status_ = Job.Status.ERROR;
     this.error_ = message;
-    this.stopTimer_();
-    log('ERROR Job [%s] errored after %ss: ', this.id_, this.runTime_ / 1000, message);
-    console.log('ERROR Job ['+this.id_+'] errored after '+(this.runTime_ / 1000)+'s: ', message);
+    this.updateStatus_(Job.Status.ERROR);
+    console.log('ERROR Job [%s] errored after %ss: ', this.id_, ((+new Date()) - this.startTime_) / 1000,  message);
     this.tidyup_();
+  },
+
+  updateStatus_: function(newStatus) {
+    this.status_ = newStatus;
+    this.update();
   },
 
   tidyup_: function() {
@@ -324,7 +312,7 @@ Job.prototype = {
     this.partitioner_.deleteJob(this.id_);
   }
 
-};
+});
 
 Job.Status = {
   STARTING: 'STARTING',
