@@ -1,0 +1,66 @@
+<head>
+  <script src="/js/third_party/jquery.min.js"></script>
+</head>
+
+<body>
+  {{> allJobs }}
+</body>
+
+<template name="allJobs">
+  {{#each jobs}}
+    <div class="job">
+      {{#each asArray controller}}
+        <div><b>Id:</b> {{v.id}}</div>
+        <div><b>Status:</b> {{v.status}}</div>
+        <div><b>Input:</b> {{v.options.inputUrl}}</div>
+        <div><b>Map:</b> <code>{{v.options.mapFunction}}</code></div>
+        <div><b>Reduce:</b> <code>{{v.options.reduceFunction}}</code></div>
+        {{#if v.error}}
+          <div><b>Error:</b> {{v.error}}</div>
+        {{/if}}
+        {{#if v.runTime}}
+          <div><b>Run time:</b> {{v.runTime}}</div>
+        {{/if}}
+        {{#if v.result}}
+          <div class="resultContainer">
+            <a class="viewResult" href="#">View Result</a>
+            <div class="result">
+              <b>Result:</b> {{asJson v.result}} <br>
+              <a class="hideResult" href="#">Hide Result</a>
+            </div>
+          </div>
+        {{/if}}
+      {{/each}}
+
+      <br>
+
+      <table>
+        {{#each asArray mapper}}
+          <tr>
+            <td>MAPPER</td>
+            <td>{{k}}</td>
+            <td>{{v.status}}</td>
+            <td>{{asJson v.stats}}</td>
+          </tr>
+        {{/each}}
+        {{#each asArray partitioner}}
+          <tr>
+            <td>PARTITIONER</td>
+            <td>{{k}}</td>
+            <td>{{v.status}}</td>
+            <td>{{asJson v.stats}}</td>
+          </tr>
+        {{/each}}
+        {{#each asArray reducer}}
+          <tr>
+            <td>REDUCER</td>
+            <td>{{k}}</td>
+            <td>{{v.status}}</td>
+            <td>{{asJson v.stats}}</td>
+          </tr>
+        {{/each}}
+      </table>
+    </div>
+    <hr>
+  {{/each}}
+</template>
