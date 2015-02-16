@@ -21,7 +21,7 @@ util.inherits(Mapper, EventEmitter);
 Mapper.prototype = _.assign(Mapper.prototype, {
   id: function() { return this.id_; },
 
-  url: function() { return this.url_; },
+  address: function() { return this.address_; },
 
   isAvailable: function() { return this.isAvailable_; },
 
