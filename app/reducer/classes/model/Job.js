@@ -1,34 +1,43 @@
 // https://github.com/mathiasbynens/jsesc
 var jsesc = require('jsesc');
-
 var vm = require('vm');
-
 var log = require('debug')('nmr:reducer:Job');
+var _ = require('lodash');
+var util = require('util');
 
-var Job = function(
+var EventEmitter = require('events').EventEmitter;
+var JobBase = require('../../../common/model/Job');
+
+var Job = JobBase.extend({
+
+  constructor: function(
     id,
     reduceFunction,
     client
-) {
-  this.id_ = id  || (function() { throw new Error('id not provided'); })();
-  this.reduceFunction_ = reduceFunction || (function() { throw new Error('reduceFunction not provided'); })();
-  this.client_ = client;
-  this.finished_ = false;
+  ) {
+    Job.super_.call(this, id);
 
-  this.results_ = {};
-};
+    this.reduceFunction_ = reduceFunction || (function() { throw new Error('reduceFunction not provided'); })();
+    this.client_ = client;
+    this.finished_ = false;
+    this.reducedCount_ = 0;
 
-Job.prototype = {
-  id: function() { return this.id_; },
+    this.results_ = {};
+  },
 
   toJson: function() {
-    return {
-      id: this.id_,
-      options: {
-        reduceFunction: this.reduceFunction_
-      }
-    };
+    return _.extend(Job.super_.prototype.toJson.call(this), {
+      reduceFunction: this.reduceFunction_,
+      results: this.results_
+    });
   },
+
+  // Because we're only processing a single mapping at a time
+  canFinish: function() { return true; },
+
+  bubbleFinish: function() { this.client_.finished(this.id_); },
+
+  generateStats: function() { return { reduced: this.reducedCount_ }; },
 
   process: function(key, values, partitionerClient) {
     log('process(%s, %o) called', key, values);
@@ -64,20 +73,11 @@ Job.prototype = {
 
     if (!didError) {
       this.results_[key] = result;
+      this.reducedCount_++;
     }
   },
 
-  results: function() {
-    return this.results_;
-  },
-
-  finish: function() {
-    // TODO: verify we're not still processing anything
-    // (this works at the moment because we only process 1 job at a time)
-    log('Finished job %s.', this.id_);
-    this.finished_ = true;
-    this.client_.finished(this.id_);
-  }
-};
+  results: function() { return this.results_; }
+});
 
 module.exports = Job;
