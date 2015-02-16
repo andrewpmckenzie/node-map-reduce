@@ -35,6 +35,7 @@ var ReducerClient = Client.extend({
   },
 
   finish: function() {
+    this.log('finish() called.');
     this.finished_ = true;
     this.maybeSignalFinished_();
   },

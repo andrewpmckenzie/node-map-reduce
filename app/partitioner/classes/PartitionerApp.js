@@ -3,7 +3,6 @@ var util = require("util");
 var App = require('../../common/base/App');
 var ControllerClient = require('./client/ControllerClient');
 var ReducerClient = require('./client/ReducerClient');
-var JobRegistry = require('./helper/JobRegistry');
 var Job = require('./model/Job');
 
 var PartitionerApp = App.extend({
@@ -13,7 +12,6 @@ var PartitionerApp = App.extend({
     PartitionerApp.super_.apply(this, arguments);
     this.log('PartitionerApp(%s, %s) called.', port, controllerUrl);
 
-    this.jobRegistry_ = new JobRegistry();
     this.controllerClient_ = new ControllerClient(controllerUrl);
     this.setupControllerSocket(this.controllerClient_.socket());
 
@@ -44,7 +42,7 @@ var PartitionerApp = App.extend({
     }.bind(this));
 
     var job = new Job(options.jobId, options.mapperCount, reducers, this.controllerClient_);
-    this.jobRegistry_.add(job);
+    this.addJob(job);
     replyFn({
       success: true
     });
@@ -52,27 +50,23 @@ var PartitionerApp = App.extend({
 
   handleMappedChunk_: function(options) {
     this.log('handleMappedChunk_(%o) called.', options);
-    var job = this.jobRegistry_.get(options.jobId);
-    if (!job) {
-      this.log('ERROR: could not find job %s to process chunk.', options.jobId);
-    } else {
+    var job = this.getJob(options.jobId);
+    if (job) {
       job.process(options.payload);
     }
   },
 
   finishJob_: function(options) {
     this.log('finishJob_(%o) called.', options);
-    var job = this.jobRegistry_.get(options.jobId);
-    if (!job) {
-      this.log('ERROR: could not find job %s to finish.', options.jobId);
-    } else {
+    var job = this.getJob(options.jobId);
+    if (job) {
       job.mapperFinished();
     }
   },
 
   deleteJob_: function(options) {
     this.log('deleteJob_(%o) called.', options);
-    this.jobRegistry_.remove(options.jobId);
+    this.removeJob(options.jobId);
   }
 });
 
