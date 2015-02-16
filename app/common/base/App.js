@@ -8,6 +8,8 @@ var extend = require('extend');
 
 var debug = require('debug');
 var Class = require('base-class-extend');
+var FrontendClient = require('../client/FrontendClient');
+var JobRegistry = require('../helper/JobRegistry');
 
 var App = Class.extend({
   logName: 'nmr:common:Registry',
@@ -29,12 +31,31 @@ var App = Class.extend({
     this.io_ = io(this.server_);
     this.io_.on('connection', function (socket) {
       this.log('IO socket connection.');
+      this.setupSocketForFrontend_(socket);
       this.setupSocket(socket);
     }.bind(this));
 
     this.address_ = null;
     this.addressCallbacks_ = [];
+
+    this.frontendClients_ = [];
+    this.jobRegistry_ = new JobRegistry();
   },
+
+  addJob: function(job) {
+    this.jobRegistry_.add(job);
+    this.frontendClients_.forEach(function(client) { client.addJob(job); });
+    job.on('update', this.sendFrontendUpdate_.bind(this, job));
+  },
+
+  // TODO: wrapping jobRegistry_ like this smells a bit
+  getJob: function(jobId) { return this.jobRegistry_.get(jobId); },
+
+  getUniqueJobId: function() { return this.jobRegistry_.getUniqueId(); },
+
+  getAllJobs: function() { return this.jobRegistry_.getAll(); },
+
+  removeJob: function(jobId) { this.jobRegistry_.remove(jobId); },
 
   setupSocket: function(socket) { /** No-op: override to decorate a socket when it connects */ },
 
@@ -161,7 +182,25 @@ var App = Class.extend({
       default:
         throw error;
     }
+  },
+
+  setupSocketForFrontend_: function(socket) {
+    this.ioEndpoint(socket, 'frontend:register', [], this.newFrontend_.bind(this, socket));
+  },
+
+  newFrontend_: function(socket, options) {
+    this.log('newFrontend_(socket, %o) called.', options);
+    var frontendClient = new FrontendClient(socket);
+    this.frontendClients_.push(frontendClient);
+
+    this.jobRegistry_.getAll().forEach(function(job) { frontendClient.addJob(job); });
+    return frontendClient;
+  },
+
+  sendFrontendUpdate_: function(job) {
+    this.frontendClients_.forEach(function(client) { client.updateJob(job); });
   }
+
 });
 
 module.exports = App;
