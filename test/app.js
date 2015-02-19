@@ -1,6 +1,8 @@
 var assert = require('assert');
 var childProcess = require('child_process');
-var log = require('debug')('nmr:test:app');
+var logServerStdOut = require('debug')('nmr:test:server:stdout');
+var logServerStdErr = require('debug')('nmr:test:server:stderr');
+var logTest = require('debug')('nmr:test');
 // https://github.com/Automattic/expect.js
 var expect = require('expect.js');
 var path = require('path');
@@ -119,6 +121,7 @@ describe('App', function(){
   var staticFileserver = null;
 
   before('Start static server', function(done) {
+    logTest('Starting static server.');
     var staticServer = new (require('node-static')).Server(path.join(__dirname, 'static'));
 
     staticFileserver = require('http').createServer(function (request, response) {
@@ -129,9 +132,11 @@ describe('App', function(){
 
     staticFileserver.on('listening', done);
     staticFileserver.listen(3200);
+    logTest('Static server listening on port 3200.');
   });
 
   beforeEach('Start app servers and initialize clients', function(done) {
+    logTest('Starting app servers and initializing clients.');
     var serversStarted = false;
     var remainingInitMessages = [
       /Mapper 1 created/, /Mapper 2 created/, /Partitioner 1 created/, /Reducer 1 created/, /Reducer 2 created/
@@ -140,10 +145,12 @@ describe('App', function(){
     serversProc = childProcess.spawn('make', ['test-servers'], { cwd: path.join(__dirname, '..') });
     // App log output appears in stderr
     serversProc.stderr.on('data', function(data) {
-      log(data.toString());
+      data.toString().split('\n').forEach(function(msg) { if (msg) { logServerStdErr(msg); } });
       remainingInitMessages = remainingInitMessages.filter(function(regex) { return !regex.test(data); });
 
       if (remainingInitMessages.length === 0 && !serversStarted) {
+        logTest('Starting app servers started.');
+
         // The server is warmed up
         serversStarted = true;
 
@@ -160,17 +167,23 @@ describe('App', function(){
         reducer1Client =    ioClient('http://localhost:3205');
         reducer2Client =    ioClient('http://localhost:3206');
 
+        logTest('Clients initialized.');
         done();
       }
     });
-    serversProc.stdout.on('data', function(data) { log(data.toString()); });
+    serversProc.stdout.on('data', function(data) {
+      data.toString().split('\n').forEach(function(msg) { if (msg) { logServerStdOut(msg); } });
+    });
   });
 
   after('Stop static server', function(done) {
     staticFileserver.close(done);
+    logTest('Stopped static server.');
   });
 
   afterEach('Stop servers and disconnect clients', function(done) {
+    logTest('Stopping servers + disconnecting clients.');
+
     controllerClient.disconnect();
     mapper1Client.disconnect();
     mapper2Client.disconnect();
@@ -178,16 +191,21 @@ describe('App', function(){
     reducer1Client.disconnect();
     reducer2Client.disconnect();
 
-    serversProc.on('close', done);
-    serversProc.kill();
-
     controllerClient  = null;
     mapper1Client     = null;
     mapper2Client     = null;
     partitionerClient = null;
     reducer1Client    = null;
     reducer2Client    = null;
-    serversProc       = null;
+    logTest('Disconnected clients.');
+
+    logTest('Killing server process.');
+    serversProc.on('close', function() {
+      logTest('Killed server process.');
+      done();
+    });
+    serversProc.kill();
+    serversProc = null;
   });
 
   // Kill server if we prematurely exit (e.g. because of SIGTERM or uncaught error)
