@@ -62,8 +62,8 @@ tmux select-pane -t 5
 tmux send-keys "grunt reducer:start --port 3015 --controller http://127.0.0.1:3010" C-m
 
 tmux select-pane -t 7
-if hash serve 2>/dev/null; then
-  tmux send-keys "cd ./test/server" C-m
+if hash ./node_modules/serve/bin/serve 2>/dev/null; then
+  tmux send-keys "cd ./test/manual/server" C-m
   tmux send-keys "./serve.sh" C-m
 else
   tmux send-keys "npm install -g serve"
@@ -71,13 +71,13 @@ fi
 
 tmux select-pane -t 6
 
-if hash serve 2>/dev/null; then
+if hash ./node_modules/serve/bin/serve 2>/dev/null; then
   tmux send-keys "export INPUT_URL='http://localhost:3999/sample_text.txt'" C-m
 else
   tmux send-keys "export INPUT_URL='http://www.gutenberg.org/files/17192/17192-8.txt'" C-m
 fi
 tmux send-keys "alias exit='tmux kill-session -t $NAME'" C-m
-tmux send-keys "./test/run.sh"
+tmux send-keys "./test/manual/run.sh"
 
 tmux setw -g mode-mouse on
 tmux set -g mouse-select-pane on
