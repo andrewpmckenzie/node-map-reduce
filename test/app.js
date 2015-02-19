@@ -6,7 +6,7 @@ var path = require('path');
 
 describe('App', function(){
   this.slow(1000);
-  this.timeout(5000);
+  this.timeout(60000);
 
   var gettysburgUrl = 'http://localhost:3200/gettysburg.txt';
   var wordcountMapFunction = 'function(line) { var words = {}; line.replace(/[^\s\w]/g, "").split(/\s/).forEach(function(w) { w = w.toLowerCase(); words[w] = (words[w] || 0) + 1; }); return words; }';
