@@ -1,5 +1,6 @@
 var assert = require('assert');
 var childProcess = require('child_process');
+var log = require('debug')('nmr:test:app');
 // https://github.com/Automattic/expect.js
 var expect = require('expect.js');
 var path = require('path');
@@ -137,9 +138,9 @@ describe('App', function(){
     ];
 
     serversProc = childProcess.spawn('make', ['test-servers'], { cwd: path.join(__dirname, '..') });
-
     // App log output appears in stderr
     serversProc.stderr.on('data', function(data) {
+      log(data.toString());
       remainingInitMessages = remainingInitMessages.filter(function(regex) { return !regex.test(data); });
 
       if (remainingInitMessages.length === 0 && !serversStarted) {
@@ -162,6 +163,7 @@ describe('App', function(){
         done();
       }
     });
+    serversProc.stdout.on('data', function(data) { log(data.toString()); });
   });
 
   after('Stop static server', function(done) {
