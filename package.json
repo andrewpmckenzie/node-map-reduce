@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "make",
-    "test": "DEBUG=nmr:test* make test"
+    "test": "make test"
   },
   "dependencies": {
     "base-class-extend": "0.0.11",

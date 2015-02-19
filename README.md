@@ -5,7 +5,7 @@
 A simple distributed map reduce system using node + javascript. It works (on localhost at least), but be warned -
 it is really slow. Only transfer of strings as map values, and reduce memos are supported at the moment.
 
-To run locally: `make start`
+To run locally: `make`
 
 To run tests: `make test`
 
