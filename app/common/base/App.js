@@ -31,7 +31,7 @@ var App = Class.extend({
     this.io_ = io(this.server_);
     this.io_.on('connection', function (socket) {
       this.log('IO socket connection.');
-      this.setupSocketForFrontend_(socket);
+      this.setupSocketForGeneralEvents_(socket);
       this.setupSocket(socket);
     }.bind(this));
 
@@ -184,8 +184,9 @@ var App = Class.extend({
     }
   },
 
-  setupSocketForFrontend_: function(socket) {
+  setupSocketForGeneralEvents_: function(socket) {
     this.ioEndpoint(socket, 'frontend:register', [], this.newFrontend_.bind(this, socket));
+    this.ioEndpoint(socket, 'service:shutdown', [], this.shutdownService_.bind(this));
   },
 
   newFrontend_: function(socket, options) {
@@ -195,6 +196,12 @@ var App = Class.extend({
 
     this.jobRegistry_.getAll().forEach(function(job) { frontendClient.addJob(job); });
     return frontendClient;
+  },
+
+  shutdownService_: function(options) {
+    this.log('shutdownService_() called.');
+    this.log('It was fun knowing you.');
+    process.exit();
   },
 
   sendFrontendUpdate_: function(job) {

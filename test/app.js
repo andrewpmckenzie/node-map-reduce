@@ -184,6 +184,20 @@ describe('App', function(){
   afterEach('Stop servers and disconnect clients', function(done) {
     logTest('Stopping servers + disconnecting clients.');
 
+    logTest('Waiting for servers to exit.');
+    serversProc.on('close', function() {
+      logTest('All servers exited.');
+      done();
+    });
+
+    controllerClient.emit('service:shutdown');
+    mapper1Client.emit('service:shutdown');
+    mapper2Client.emit('service:shutdown');
+    partitionerClient.emit('service:shutdown');
+    reducer1Client.emit('service:shutdown');
+    reducer2Client.emit('service:shutdown');
+    logTest('Signalled servers to exit.');
+
     controllerClient.disconnect();
     mapper1Client.disconnect();
     mapper2Client.disconnect();
@@ -199,12 +213,6 @@ describe('App', function(){
     reducer2Client    = null;
     logTest('Disconnected clients.');
 
-    logTest('Killing server process.');
-    serversProc.on('close', function() {
-      logTest('Killed server process.');
-      done();
-    });
-    serversProc.kill();
     serversProc = null;
   });
 
