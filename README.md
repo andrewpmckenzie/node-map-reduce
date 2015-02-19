@@ -1,9 +1,13 @@
 # node-map-reduce
 
+[![Build Status](https://travis-ci.org/andrewpmckenzie/node-map-reduce.svg?branch=master)](https://travis-ci.org/andrewpmckenzie/node-map-reduce)
+
 A simple distributed map reduce system using node + javascript. It works (on localhost at least), but be warned -
 it is really slow. Only transfer of strings as map values, and reduce memos are supported at the moment.
 
-To run locally: `npm start`
+To run locally: `make start`
+
+To run tests: `make test`
 
 To run a controller: `grunt controller:start --port PORT_NUMBER`
 
