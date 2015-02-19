@@ -58,11 +58,15 @@ var Job = JobBase.extend({
     try {
       result = vm.runInNewContext(wrappedFunction);
     } catch(e) {
-      errorMessage = rawResult;
+      errorMessage = e.message;
       didError = true;
       log('ERROR Bad kv caught: [k] %s, [v] %o, [memo] %o', key, values, memo);
       log('ERROR %s', wrappedFunction);
       log('ERROR throws %s', errorMessage);
+
+      var errObj = [];
+      errObj[key] = values;
+      this.client_.error(this.id(), errObj, errorMessage);
     }
 
     log('Processed chunks %s: %o', key, result);

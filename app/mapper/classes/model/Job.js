@@ -33,8 +33,8 @@ var Job = JobBase.extend({
   // Because we're only processing a single mapping at a time
   canFinish: function() { return true; },
 
-  bubbleFinish: function() { 
-    this.partitionerClient_.finish(this.id()); 
+  bubbleFinish: function() {
+    this.partitionerClient_.finish(this.id());
   },
 
   generateStats: function() { return { mapped: this.mapCount_ }; },
@@ -51,11 +51,12 @@ var Job = JobBase.extend({
 
     var errorMessage = null;
     var didError = false;
+    var result = null;
 
     try {
-      var result = vm.runInNewContext(wrappedFunction);
+      result = vm.runInNewContext(wrappedFunction);
     } catch(e) {
-      errorMessage = rawResult;
+      errorMessage = e.message;
       didError = true;
       log('ERROR Bad chunk caught: %s', chunkData);
       log('ERROR %s', wrappedFunction);

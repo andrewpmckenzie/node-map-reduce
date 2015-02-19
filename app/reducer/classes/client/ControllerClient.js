@@ -10,6 +10,10 @@ var ControllerClient = Client.extend({
 
   finished: function(jobId) {
     this.send('job:finished', {jobId: jobId});
+  },
+
+  error: function(jobId, jobData, errorMessage) {
+    this.send('reducer:chunk:error', {jobId: jobId, jobData: jobData, err: errorMessage});
   }
 });
 

@@ -58,7 +58,7 @@ UrlInputReader.prototype = {
     this.doneHandlers_.forEach(function(callback) { callback(); });
   },
 
-  handleError_: function() {
+  handleError_: function(e) {
     log('handleError_() called.');
     this.response_ = null;
     this.errorHandlers_.forEach(function(callback) { callback(e.message); });
