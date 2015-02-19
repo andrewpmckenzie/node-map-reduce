@@ -22,6 +22,8 @@ var ControllerApp = App.extend({
   },
 
   setupSocket: function(socket) {
+    this.ioEndpoint(socket, 'job:new', ['inputUrl', 'reduceFunction', 'mapFunction'], this.newJob_.bind(this));
+
     this.ioEndpoint(socket, 'mapper:register', ['address'], this.newMapper_.bind(this, socket));
     this.ioEndpoint(socket, 'partitioner:register', ['address'], this.newPartitioner_.bind(this, socket));
     this.ioEndpoint(socket, 'reducer:register', ['address'], this.newReducer_.bind(this, socket));

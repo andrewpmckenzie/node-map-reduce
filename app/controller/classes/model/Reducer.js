@@ -12,6 +12,8 @@ var Reducer = function(id, socket, address) {
   this.client_ = new ReducerClient(socket);
   this.address_ = address;
   this.finishedJobs_ = {};
+
+  log('Reducer %s created.', id);
 };
 
 util.inherits(Reducer, EventEmitter);
