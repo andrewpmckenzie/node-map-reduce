@@ -1,11 +1,8 @@
 var assert = require('assert');
-var childProcess = require('child_process');
-var logServerStdOut = require('debug')('nmr:test:server:stdout');
-var logServerStdErr = require('debug')('nmr:test:server:stderr');
-var logTest = require('debug')('nmr:test');
-// https://github.com/Automattic/expect.js
-var expect = require('expect.js');
-var path = require('path');
+var expect = require('expect.js'); // https://github.com/Automattic/expect.js
+
+var AppServer = require('./_setup').AppServers;
+var StaticServer = require('./_setup').StaticServer;
 
 describe('App', function(){
   this.slow(1000);
@@ -18,15 +15,10 @@ describe('App', function(){
   var linecountMapFunction = 'function(line) { return {count: 1}; }';
   var linecountReduceFunction = 'function(memo, values){ var total = (memo||0) * 1; values.forEach(function(v) { total += ((v||0) * 1); }); return total; }';
 
-  var controllerClient = null;
-  var mapper1Client = null;
-  var mapper2Client = null;
-  var partitionerClient = null;
-  var reducer1Client = null;
-  var reducer2Client = null;
+  var appServer = null;
 
   it('should start a new job', function(done){
-    controllerClient.on('job:added', function(data) {
+    appServer.controllerClient.on('job:added', function(data) {
       expect(data.options.inputUrl).to.eql(gettysburgUrl);
       expect(data.options.mapFunction).to.eql(wordcountMapFunction);
       expect(data.options.reduceFunction).to.eql(wordcountReduceFunction);
@@ -34,8 +26,8 @@ describe('App', function(){
       done();
     });
 
-    controllerClient.emit('frontend:register');
-    controllerClient.emit('job:new', {
+    appServer.controllerClient.emit('frontend:register');
+    appServer.controllerClient.emit('job:new', {
       inputUrl: gettysburgUrl,
       mapFunction: wordcountMapFunction,
       reduceFunction: wordcountReduceFunction
@@ -44,7 +36,7 @@ describe('App', function(){
 
   it('should complete a job', function(done){
 
-    controllerClient.on('job:updated', function(data) {
+    appServer.controllerClient.on('job:updated', function(data) {
 
       if (data.status === 'COMPLETED') {
         expect(data.result.count).to.eql(25);
@@ -52,8 +44,8 @@ describe('App', function(){
       }
     });
 
-    controllerClient.emit('frontend:register');
-    controllerClient.emit('job:new', {
+    appServer.controllerClient.emit('frontend:register');
+    appServer.controllerClient.emit('job:new', {
       inputUrl: gettysburgUrl,
       mapFunction: linecountMapFunction,
       reduceFunction: linecountReduceFunction
@@ -65,7 +57,7 @@ describe('App', function(){
 
     var erroringMapFunction = 'function(line) { throw new Error("Bang bang, my baby shot me down.".toUpperCase()); }';
 
-    controllerClient.on('job:updated', function(data) {
+    appServer.controllerClient.on('job:updated', function(data) {
 
       if (data.status === 'ERROR') {
         expect(data.error).to.contain('Error while mapping');
@@ -79,8 +71,8 @@ describe('App', function(){
       }
     });
 
-    controllerClient.emit('frontend:register');
-    controllerClient.emit('job:new', {
+    appServer.controllerClient.emit('frontend:register');
+    appServer.controllerClient.emit('job:new', {
       inputUrl: gettysburgUrl,
       mapFunction: erroringMapFunction,
       reduceFunction: linecountReduceFunction
@@ -92,7 +84,7 @@ describe('App', function(){
 
     var erroringReduceFunction = 'function(line) { throw new Error("Bang bang, I hit the ground.".toUpperCase()); }';
 
-    controllerClient.on('job:updated', function(data) {
+    appServer.controllerClient.on('job:updated', function(data) {
 
       if (data.status === 'ERROR') {
         expect(data.error).to.contain('Error while reducing');
@@ -106,8 +98,8 @@ describe('App', function(){
       }
     });
 
-    controllerClient.emit('frontend:register');
-    controllerClient.emit('job:new', {
+    appServer.controllerClient.emit('frontend:register');
+    appServer.controllerClient.emit('job:new', {
       inputUrl: gettysburgUrl,
       mapFunction: linecountMapFunction,
       reduceFunction: erroringReduceFunction
@@ -116,110 +108,30 @@ describe('App', function(){
   });
 
   // Setup / Teardown
-
-  var serversProc = null;
-  var staticFileserver = null;
+  var staticServer = null;
 
   before('Start static server', function(done) {
-    logTest('Starting static server.');
-    var staticServer = new (require('node-static')).Server(path.join(__dirname, 'static'));
-
-    staticFileserver = require('http').createServer(function (request, response) {
-      request.addListener('end', function () {
-        staticServer.serve(request, response);
-      }).resume();
-    });
-
-    staticFileserver.on('listening', done);
-    staticFileserver.listen(3200);
-    logTest('Static server listening on port 3200.');
+    staticServer = new StaticServer().start(done);
   });
 
   beforeEach('Start app servers and initialize clients', function(done) {
-    logTest('Starting app servers and initializing clients.');
-    var serversStarted = false;
-    var remainingInitMessages = [
-      /Mapper 1 created/, /Mapper 2 created/, /Partitioner 1 created/, /Reducer 1 created/, /Reducer 2 created/
-    ];
-
-    serversProc = childProcess.spawn('make', ['test-servers'], { cwd: path.join(__dirname, '..') });
-    // App log output appears in stderr
-    serversProc.stderr.on('data', function(data) {
-      data.toString().split('\n').forEach(function(msg) { if (msg) { logServerStdErr(msg); } });
-      remainingInitMessages = remainingInitMessages.filter(function(regex) { return !regex.test(data); });
-
-      if (remainingInitMessages.length === 0 && !serversStarted) {
-        logTest('Starting app servers started.');
-
-        // The server is warmed up
-        serversStarted = true;
-
-        // We need to blow away the socket.io-client require cache, otherwise it won't allow us to reconnect.
-        Object.keys(require.cache).filter(function(k) { return k.indexOf('io-client') > 0; }).forEach(function(key) {
-          delete require.cache[key];
-        });
-        var ioClient = require('socket.io-client');
-
-        controllerClient =  ioClient('http://localhost:3201');
-        mapper1Client =     ioClient('http://localhost:3202');
-        mapper2Client =     ioClient('http://localhost:3203');
-        partitionerClient = ioClient('http://localhost:3204');
-        reducer1Client =    ioClient('http://localhost:3205');
-        reducer2Client =    ioClient('http://localhost:3206');
-
-        logTest('Clients initialized.');
-        done();
-      }
-    });
-    serversProc.stdout.on('data', function(data) {
-      data.toString().split('\n').forEach(function(msg) { if (msg) { logServerStdOut(msg); } });
-    });
+    appServer = new AppServer().start(done);
   });
 
   after('Stop static server', function(done) {
-    staticFileserver.close(done);
-    logTest('Stopped static server.');
+    staticServer.stop(done);
+    staticServer = null;
   });
 
   afterEach('Stop servers and disconnect clients', function(done) {
-    logTest('Stopping servers + disconnecting clients.');
-
-    logTest('Waiting for servers to exit.');
-    serversProc.on('close', function() {
-      logTest('All servers exited.');
-      done();
-    });
-
-    controllerClient.emit('service:shutdown');
-    mapper1Client.emit('service:shutdown');
-    mapper2Client.emit('service:shutdown');
-    partitionerClient.emit('service:shutdown');
-    reducer1Client.emit('service:shutdown');
-    reducer2Client.emit('service:shutdown');
-    logTest('Signalled servers to exit.');
-
-    controllerClient.disconnect();
-    mapper1Client.disconnect();
-    mapper2Client.disconnect();
-    partitionerClient.disconnect();
-    reducer1Client.disconnect();
-    reducer2Client.disconnect();
-
-    controllerClient  = null;
-    mapper1Client     = null;
-    mapper2Client     = null;
-    partitionerClient = null;
-    reducer1Client    = null;
-    reducer2Client    = null;
-    logTest('Disconnected clients.');
-
-    serversProc = null;
+    appServer.stop(done);
+    appServer = null;
   });
 
   // Kill server if we prematurely exit (e.g. because of SIGTERM or uncaught error)
   process.on('exit', function() {
-    if (serversProc) {
-      serversProc.kill();
+    if (appServer) {
+      appServer.kill();
     }
   });
 });
