@@ -130,7 +130,7 @@ describe('App', function(){
     });
   });
 
-  it('should pass the correct memo type to the reducer function', function(done) {
+  it('should pass the correct memo type to the reducer function (trying with number)', function(done) {
 
     var numberReturningMapFunction = 'function(line) { return {count: 1}; }';
     var numberProcessingReduceFunction = 'function(memo, values){ if (typeof memo !== "number" && typeof memo !== "undefined") { throw new Error("Memo was a [" + (typeof memo) + "]."); }; return (memo || 0) + values.length; }';
@@ -150,6 +150,37 @@ describe('App', function(){
       inputUrl: gettysburgUrl,
       mapFunction: numberReturningMapFunction,
       reduceFunction: numberProcessingReduceFunction
+    });
+  });
+
+  it.only('should pass the correct memo type to the reducer function (trying with string)', function(done) {
+
+    var numberReturningMapFunction = function(line) { return {count: 1}; };
+
+    var numberProcessingReduceFunction = function(memo, values) {
+      if (typeof memo !== "string" && typeof memo !== "undefined") {
+        throw new Error("Memo was a [" + (typeof memo) + "].");
+      }
+      var x = (memo || "");
+      values.forEach(function(v) { x += v; });
+      return x;
+    };
+
+    appServer.controllerClient.on('job:updated', function(data) {
+
+      if (data.status === 'COMPLETED') {
+        expect(data.result.count).to.eql('1111111111111111111111111');
+        done();
+      } else if (data.status === 'ERROR') {
+        done(new Error('Job errored: ' + data.error));
+      }
+    });
+
+    appServer.controllerClient.emit('frontend:register');
+    appServer.controllerClient.emit('job:new', {
+      inputUrl: gettysburgUrl,
+      mapFunction: numberReturningMapFunction.toString(),
+      reduceFunction: numberProcessingReduceFunction.toString()
     });
   });
 
