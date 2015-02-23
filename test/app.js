@@ -9,19 +9,44 @@ describe('App', function(){
   this.timeout(60000);
 
   var gettysburgUrl = 'http://localhost:3200/gettysburg.txt';
-  var wordcountMapFunction = 'function(line) { var words = {}; line.replace(/[^\s\w]/g, "").split(/\s/).forEach(function(w) { w = w.toLowerCase(); words[w] = (words[w] || 0) + 1; }); return words; }';
-  var wordcountReduceFunction = 'function(memo, values){ return ((memo || 0) * 1) + values.reduce(function(memo, value) { return memo + (value * 1); }, 0); }';
 
-  var linecountMapFunction = 'function(line) { return {count: 1}; }';
-  var linecountReduceFunction = 'function(memo, values){ var total = (memo||0) * 1; values.forEach(function(v) { total += ((v||0) * 1); }); return total; }';
+  var WORDCOUNT_MAP_FUNCTION = function(line) {
+    var words = {};
+    line.replace(/[^\s\w]/g, "").split(/\s/).forEach(function(w) {
+      w = w.toLowerCase(); words[w] = (words[w] || 0) + 1;
+    });
+    return words;
+  }.toString();
+
+  var WORDCOUNT_REDUCE_FUNCTION = function(memo, values){
+    return ((memo || 0) * 1) + values.reduce(function(memo, value) {
+      return memo + (value * 1);
+    }, 0);
+  }.toString();
+
+  var LINECOUNT_MAP_FUNCTION = function(line) {
+    return { count: 1 };
+  }.toString();
+
+  var LINECOUNT_REDUCE_FUNCTION = function(memo, values){
+    var total = (memo||0) * 1;
+    values.forEach(function(v) {
+      total += ((v||0) * 1);
+    });
+    return total;
+  }.toString();
+
+  var UNIMPORTANT_MAP_FUNCTION = function(line) { return { foo: 'bar' }; }.toString();
+
+  var UNIMPORTANT_REDUCE_FUNCTION = function(memo, values) { return ''; }.toString();
 
   var appServer = null;
 
   it('should start a new job', function(done){
     appServer.controllerClient.on('job:added', function(data) {
       expect(data.options.inputUrl).to.eql(gettysburgUrl);
-      expect(data.options.mapFunction).to.eql(wordcountMapFunction);
-      expect(data.options.reduceFunction).to.eql(wordcountReduceFunction);
+      expect(data.options.mapFunction).to.eql(UNIMPORTANT_MAP_FUNCTION);
+      expect(data.options.reduceFunction).to.eql(UNIMPORTANT_REDUCE_FUNCTION);
       expect(data.status).to.eql('STARTING');
       done();
     });
@@ -29,8 +54,8 @@ describe('App', function(){
     appServer.controllerClient.emit('frontend:register');
     appServer.controllerClient.emit('job:new', {
       inputUrl: gettysburgUrl,
-      mapFunction: wordcountMapFunction,
-      reduceFunction: wordcountReduceFunction
+      mapFunction: UNIMPORTANT_MAP_FUNCTION,
+      reduceFunction: UNIMPORTANT_REDUCE_FUNCTION
     });
   });
 
@@ -47,15 +72,17 @@ describe('App', function(){
     appServer.controllerClient.emit('frontend:register');
     appServer.controllerClient.emit('job:new', {
       inputUrl: gettysburgUrl,
-      mapFunction: linecountMapFunction,
-      reduceFunction: linecountReduceFunction
+      mapFunction: LINECOUNT_MAP_FUNCTION,
+      reduceFunction: LINECOUNT_REDUCE_FUNCTION
     });
 
   });
 
   it('should report mapper errors', function(done){
 
-    var erroringMapFunction = 'function(line) { throw new Error("Bang bang, my baby shot me down.".toUpperCase()); }';
+    var ERRORING_MAP_FUNCTION = function(line) {
+      throw new Error("Bang bang, my baby shot me down.".toUpperCase());
+    }.toString();
 
     appServer.controllerClient.on('job:updated', function(data) {
 
@@ -74,15 +101,17 @@ describe('App', function(){
     appServer.controllerClient.emit('frontend:register');
     appServer.controllerClient.emit('job:new', {
       inputUrl: gettysburgUrl,
-      mapFunction: erroringMapFunction,
-      reduceFunction: linecountReduceFunction
+      mapFunction: ERRORING_MAP_FUNCTION,
+      reduceFunction: UNIMPORTANT_REDUCE_FUNCTION
     });
 
   });
 
   it('should report reducer errors', function(done){
 
-    var erroringReduceFunction = 'function(line) { throw new Error("Bang bang, I hit the ground.".toUpperCase()); }';
+    var ERRORING_REDUCE_FUNCTION = function(line) {
+      throw new Error("Bang bang, I hit the ground.".toUpperCase());
+    }.toString();
 
     appServer.controllerClient.on('job:updated', function(data) {
 
@@ -101,16 +130,20 @@ describe('App', function(){
     appServer.controllerClient.emit('frontend:register');
     appServer.controllerClient.emit('job:new', {
       inputUrl: gettysburgUrl,
-      mapFunction: linecountMapFunction,
-      reduceFunction: erroringReduceFunction
+      mapFunction: UNIMPORTANT_MAP_FUNCTION,
+      reduceFunction: ERRORING_REDUCE_FUNCTION
     });
 
   });
 
   it('should pass the correct types to the reducer function', function(done) {
 
-    var numberReturningMapFunction = 'function(line) { return {count: 1}; }';
-    var numberProcessingReduceFunction = 'function(memo, values){ values.forEach(function(v) { if (typeof v !== "number") throw new Error("Value was " + (typeof v)); }); return 1; }';
+    var NUMBER_VERIFYING_MAP_FUNCTION = function(memo, values){
+      values.forEach(function(v) {
+        if (typeof v !== "number") throw new Error("Value was " + (typeof v));
+      });
+      return 1;
+    }.toString();
 
     appServer.controllerClient.on('job:updated', function(data) {
 
@@ -125,15 +158,19 @@ describe('App', function(){
     appServer.controllerClient.emit('frontend:register');
     appServer.controllerClient.emit('job:new', {
       inputUrl: gettysburgUrl,
-      mapFunction: numberReturningMapFunction,
-      reduceFunction: numberProcessingReduceFunction
+      mapFunction: LINECOUNT_MAP_FUNCTION,
+      reduceFunction: NUMBER_VERIFYING_MAP_FUNCTION
     });
   });
 
   it('should pass the correct memo type to the reducer function (trying with number)', function(done) {
 
-    var numberReturningMapFunction = 'function(line) { return {count: 1}; }';
-    var numberProcessingReduceFunction = 'function(memo, values){ if (typeof memo !== "number" && typeof memo !== "undefined") { throw new Error("Memo was a [" + (typeof memo) + "]."); }; return (memo || 0) + values.length; }';
+    var NUMBER_MEMO_VERIFYING_REDUCE_FUNCTION = function(memo, values){
+      if (typeof memo !== "number" && typeof memo !== "undefined") {
+        throw new Error("Memo was a [" + (typeof memo) + "].");
+      }
+      return (memo || 0) + values.length;
+    }.toString();
 
     appServer.controllerClient.on('job:updated', function(data) {
 
@@ -148,23 +185,21 @@ describe('App', function(){
     appServer.controllerClient.emit('frontend:register');
     appServer.controllerClient.emit('job:new', {
       inputUrl: gettysburgUrl,
-      mapFunction: numberReturningMapFunction,
-      reduceFunction: numberProcessingReduceFunction
+      mapFunction: LINECOUNT_MAP_FUNCTION,
+      reduceFunction: NUMBER_MEMO_VERIFYING_REDUCE_FUNCTION
     });
   });
 
-  it.only('should pass the correct memo type to the reducer function (trying with string)', function(done) {
+  it('should pass the correct memo type to the reducer function (trying with string)', function(done) {
 
-    var numberReturningMapFunction = function(line) { return {count: 1}; };
-
-    var numberProcessingReduceFunction = function(memo, values) {
+    var STRING_MEMO_VERIFYING_REDUCE_FUNCTION = function(memo, values) {
       if (typeof memo !== "string" && typeof memo !== "undefined") {
         throw new Error("Memo was a [" + (typeof memo) + "].");
       }
       var x = (memo || "");
       values.forEach(function(v) { x += v; });
       return x;
-    };
+    }.toString();
 
     appServer.controllerClient.on('job:updated', function(data) {
 
@@ -179,15 +214,16 @@ describe('App', function(){
     appServer.controllerClient.emit('frontend:register');
     appServer.controllerClient.emit('job:new', {
       inputUrl: gettysburgUrl,
-      mapFunction: numberReturningMapFunction.toString(),
-      reduceFunction: numberProcessingReduceFunction.toString()
+      mapFunction: LINECOUNT_MAP_FUNCTION,
+      reduceFunction: STRING_MEMO_VERIFYING_REDUCE_FUNCTION
     });
   });
 
   it('errors if the map function does not return an object', function(done) {
 
-    var numberReturningMapFunction = 'function(line) { return "foo"; }';
-    var numberProcessingReduceFunction = linecountReduceFunction;
+    var STRING_RETURNING_MAP_FUNCTION = function(line) {
+      return "foo";
+    }.toString();
 
     appServer.controllerClient.on('job:updated', function(data) {
 
@@ -202,15 +238,16 @@ describe('App', function(){
     appServer.controllerClient.emit('frontend:register');
     appServer.controllerClient.emit('job:new', {
       inputUrl: gettysburgUrl,
-      mapFunction: numberReturningMapFunction,
-      reduceFunction: numberProcessingReduceFunction
+      mapFunction: STRING_RETURNING_MAP_FUNCTION,
+      reduceFunction: UNIMPORTANT_REDUCE_FUNCTION
     });
   });
 
   it('errors if the map function returns an Array', function(done) {
 
-    var numberReturningMapFunction = 'function(line) { return ["foo"]; }';
-    var numberProcessingReduceFunction = linecountReduceFunction;
+    var ARRAY_RETURNING_MAP_FUNCTION = function(line) {
+      return ["foo"];
+    }.toString();
 
     appServer.controllerClient.on('job:updated', function(data) {
 
@@ -225,8 +262,8 @@ describe('App', function(){
     appServer.controllerClient.emit('frontend:register');
     appServer.controllerClient.emit('job:new', {
       inputUrl: gettysburgUrl,
-      mapFunction: numberReturningMapFunction,
-      reduceFunction: numberProcessingReduceFunction
+      mapFunction: ARRAY_RETURNING_MAP_FUNCTION,
+      reduceFunction: UNIMPORTANT_REDUCE_FUNCTION
     });
   });
 
