@@ -153,7 +153,7 @@ describe('App', function(){
     });
   });
 
-  it.only('errors if the map function returns an Array', function(done) {
+  it('errors if the map function returns an Array', function(done) {
 
     var numberReturningMapFunction = 'function(line) { return ["foo"]; }';
     var numberProcessingReduceFunction = linecountReduceFunction;
