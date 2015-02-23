@@ -107,6 +107,29 @@ describe('App', function(){
 
   });
 
+  it('should pass the correct types to the reducer function', function(done) {
+
+    var numberReturningMapFunction = 'function(line) { return {count: 1}; }';
+    var numberProcessingReduceFunction = 'function(memo, values){ values.forEach(function(v) { if (typeof v !== "number") throw new Error("Value was " + (typeof v)); }); return 1; }';
+
+    appServer.controllerClient.on('job:updated', function(data) {
+
+      if (data.status === 'COMPLETED') {
+        expect(data.result.count).to.eql(1);
+        done();
+      } else if (data.status === 'ERROR') {
+        done(new Error('Job errored: ' + data.error));
+      }
+    });
+
+    appServer.controllerClient.emit('frontend:register');
+    appServer.controllerClient.emit('job:new', {
+      inputUrl: gettysburgUrl,
+      mapFunction: numberReturningMapFunction,
+      reduceFunction: numberProcessingReduceFunction
+    });
+  });
+
   // Setup / Teardown
   var staticServer = null;
 

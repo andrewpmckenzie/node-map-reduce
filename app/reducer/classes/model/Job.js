@@ -46,10 +46,10 @@ var Job = JobBase.extend({
 
     // TODO: how should we handle types?
     var escapedMemo = memo ? jsesc(memo) : '';
-    var escapedValues = values.map(jsesc);
+    var escapedValues = JSON.stringify(values);
 
     // TODO: pass through appropriate types
-    var wrappedFunction = '(' + this.reduceFunction_ + ')(\'' + escapedMemo + '\', [\'' + escapedValues.join('\',\'') + '\'])';
+    var wrappedFunction = '(' + this.reduceFunction_ + ')(\'' + escapedMemo + '\', ' + escapedValues + ')';
 
     var result;
     var errorMessage = null;
@@ -64,7 +64,7 @@ var Job = JobBase.extend({
       log('ERROR %s', wrappedFunction);
       log('ERROR throws %s', errorMessage);
 
-      var errObj = [];
+      var errObj = {};
       errObj[key] = values;
       this.client_.error(this.id(), errObj, errorMessage);
     }

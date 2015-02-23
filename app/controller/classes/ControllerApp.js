@@ -88,7 +88,7 @@ var ControllerApp = App.extend({
 
   reducerChunkError_: function(options) {
     // TODO: send via reducer event
-    this.log('reducerChunkProcessed_(%o) called.', options);
+    this.log('reducerChunkError_(%o) called.', options);
     var job = this.getJob(options.jobId);
     if (job) {
       job.reduceError(options.jobData, options.err);
