@@ -45,11 +45,11 @@ var Job = JobBase.extend({
     var memo = this.results_[key];
 
     // TODO: how should we handle types?
-    var escapedMemo = memo ? jsesc(memo) : '';
+    var escapedMemo = memo ? JSON.stringify(memo) : 'undefined';
     var escapedValues = JSON.stringify(values);
 
     // TODO: pass through appropriate types
-    var wrappedFunction = '(' + this.reduceFunction_ + ')(\'' + escapedMemo + '\', ' + escapedValues + ')';
+    var wrappedFunction = '(' + this.reduceFunction_ + ')(' + escapedMemo + ', ' + escapedValues + ')';
 
     var result;
     var errorMessage = null;

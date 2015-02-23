@@ -130,6 +130,29 @@ describe('App', function(){
     });
   });
 
+  it('should pass the correct memo type to the reducer function', function(done) {
+
+    var numberReturningMapFunction = 'function(line) { return {count: 1}; }';
+    var numberProcessingReduceFunction = 'function(memo, values){ if (typeof memo !== "number" && typeof memo !== "undefined") { throw new Error("Memo was a [" + (typeof memo) + "]."); }; return (memo || 0) + values.length; }';
+
+    appServer.controllerClient.on('job:updated', function(data) {
+
+      if (data.status === 'COMPLETED') {
+        expect(data.result.count).to.eql(25);
+        done();
+      } else if (data.status === 'ERROR') {
+        done(new Error('Job errored: ' + data.error));
+      }
+    });
+
+    appServer.controllerClient.emit('frontend:register');
+    appServer.controllerClient.emit('job:new', {
+      inputUrl: gettysburgUrl,
+      mapFunction: numberReturningMapFunction,
+      reduceFunction: numberProcessingReduceFunction
+    });
+  });
+
   it('errors if the map function does not return an object', function(done) {
 
     var numberReturningMapFunction = 'function(line) { return "foo"; }';
