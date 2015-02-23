@@ -55,6 +55,13 @@ var Job = JobBase.extend({
 
     try {
       result = vm.runInNewContext(wrappedFunction);
+
+      if (typeof result !== 'object') {
+        throw new Error('Mapper must return an object but returned [' + typeof result + '] instead.');
+      } else if (Object.prototype.toString.call(result) === '[object Array]') {
+        // Small hack because instanceof Array doesn't seem to work with vm
+        throw new Error('Mapper must return an object but returned [Array] instead.');
+      }
     } catch(e) {
       errorMessage = e.message;
       didError = true;

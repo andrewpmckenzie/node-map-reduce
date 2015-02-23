@@ -130,6 +130,52 @@ describe('App', function(){
     });
   });
 
+  it('errors if the map function does not return an object', function(done) {
+
+    var numberReturningMapFunction = 'function(line) { return "foo"; }';
+    var numberProcessingReduceFunction = linecountReduceFunction;
+
+    appServer.controllerClient.on('job:updated', function(data) {
+
+      if (data.status === 'COMPLETED') {
+        done(new Error('Job completed, but should return an error.'));
+      } else if (data.status === 'ERROR') {
+        expect(data.error).to.contain('Mapper must return an object but returned [string] instead.');
+        done();
+      }
+    });
+
+    appServer.controllerClient.emit('frontend:register');
+    appServer.controllerClient.emit('job:new', {
+      inputUrl: gettysburgUrl,
+      mapFunction: numberReturningMapFunction,
+      reduceFunction: numberProcessingReduceFunction
+    });
+  });
+
+  it.only('errors if the map function returns an Array', function(done) {
+
+    var numberReturningMapFunction = 'function(line) { return ["foo"]; }';
+    var numberProcessingReduceFunction = linecountReduceFunction;
+
+    appServer.controllerClient.on('job:updated', function(data) {
+
+      if (data.status === 'COMPLETED') {
+        done(new Error('Job completed, but should return an error.'));
+      } else if (data.status === 'ERROR') {
+        expect(data.error).to.contain('Mapper must return an object but returned [Array] instead.');
+        done();
+      }
+    });
+
+    appServer.controllerClient.emit('frontend:register');
+    appServer.controllerClient.emit('job:new', {
+      inputUrl: gettysburgUrl,
+      mapFunction: numberReturningMapFunction,
+      reduceFunction: numberProcessingReduceFunction
+    });
+  });
+
   // Setup / Teardown
   var staticServer = null;
 
