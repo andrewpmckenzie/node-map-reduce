@@ -5,7 +5,7 @@
 A simple distributed map reduce system using node + javascript. It works (on localhost at least), but be warned -
 it is really slow. Only transfer of strings as map values, and reduce memos are supported at the moment.
 
-To run locally: `make`
+To run a local environment (1 controller, 2 mappers, 1 partitioner, 3 reducers): `make`
 
 To run tests: `make test`
 
@@ -13,9 +13,9 @@ To run a controller: `PORT=3000 make controller`
 
 To run a mapper: `PORT=3001 CONTROLLER_ADDRESS=http://localhost:3000 make mapper`
 
-To run a reducer: `PORT=3002 CONTROLLER_ADDRESS=http://localhost:3000 make reducer`
-
 To run a partitioner: `PORT=3003 CONTROLLER_ADDRESS=http://localhost:3000 make partitioner`
+
+To run a reducer: `PORT=3002 CONTROLLER_ADDRESS=http://localhost:3000 make reducer`
 
 To make a request:
 
