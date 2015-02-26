@@ -13,6 +13,18 @@ frontend:
 	cd ./frontend && \
 	meteor run
 
+controller:
+	node ./app/controller/bin/server.js
+
+mapper:
+	node ./app/mapper/bin/server.js $(CONTROLLER_ADDRESS)
+
+reducer:
+	node ./app/reducer/bin/server.js $(CONTROLLER_ADDRESS)
+
+partitioner:
+	node ./app/partitioner/bin/server.js $(CONTROLLER_ADDRESS)
+
 test-servers:
 	${MAKE} -j7 \
 	test-controller-3201 \
@@ -25,31 +37,36 @@ test-servers:
 test-controller-3201:
 	DEBUG=$(DEBUG) \
 	PORT=3201 \
-	node ./app/controller/bin/server.js
+	$(MAKE) controller
 
 test-mapper-3202:
 	DEBUG=$(DEBUG) \
 	PORT=3202 \
-	node ./app/mapper/bin/server.js http://localhost:3201
+	CONTROLLER_ADDRESS=http://localhost:3201 \
+	$(MAKE) mapper
 
 test-mapper-3203:
 	DEBUG=$(DEBUG) \
 	PORT=3203 \
-	node ./app/mapper/bin/server.js http://localhost:3201
+	CONTROLLER_ADDRESS=http://localhost:3201 \
+	$(MAKE) mapper
 
 test-partitioner-3204:
 	DEBUG=$(DEBUG) \
 	PORT=3204 \
-	node ./app/partitioner/bin/server.js http://localhost:3201
+	CONTROLLER_ADDRESS=http://localhost:3201 \
+	$(MAKE) partitioner
 
 test-reducer-3205:
 	DEBUG=$(DEBUG) \
 	PORT=3205 \
-	node ./app/reducer/bin/server.js http://localhost:3201
+	CONTROLLER_ADDRESS=http://localhost:3201 \
+	$(MAKE) reducer
 
 test-reducer-3206:
 	DEBUG=$(DEBUG) \
 	PORT=3206 \
-	node ./app/reducer/bin/server.js http://localhost:3201
+	CONTROLLER_ADDRESS=http://localhost:3201 \
+	$(MAKE) reducer
 
 .PHONY: test frontend

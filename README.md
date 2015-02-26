@@ -9,13 +9,13 @@ To run locally: `make`
 
 To run tests: `make test`
 
-To run a controller: `grunt controller:start --port PORT_NUMBER`
+To run a controller: `PORT=3000 make controller`
 
-To run a mapper: `grunt mapper:start --port PORT_NUMBER --controller http://CONTROLLER_ADDRESS:CONTROLLER_PORT`
+To run a mapper: `PORT=3001 CONTROLLER_ADDRESS=http://localhost:3000 make mapper`
 
-To run a reducer: `grunt reducer:start --port PORT_NUMBER --controller http://CONTROLLER_ADDRESS:CONTROLLER_PORT`
+To run a reducer: `PORT=3002 CONTROLLER_ADDRESS=http://localhost:3000 make reducer`
 
-To run a partitioner: `grunt partitioner:start --port PORT_NUMBER --controller http://CONTROLLER_ADDRESS:CONTROLLER_PORT`
+To run a partitioner: `PORT=3003 CONTROLLER_ADDRESS=http://localhost:3000 make partitioner`
 
 To make a request:
 
