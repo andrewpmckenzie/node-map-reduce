@@ -59,7 +59,7 @@ describe('App', function(){
     });
   });
 
-  it('should complete a job', function(done){
+  it('should complete a linecount job', function(done){
 
     appServer.controllerClient.on('job:updated', function(data) {
 
@@ -74,6 +74,28 @@ describe('App', function(){
       inputUrl: gettysburgUrl,
       mapFunction: LINECOUNT_MAP_FUNCTION,
       reduceFunction: LINECOUNT_REDUCE_FUNCTION
+    });
+
+  });
+
+  it('should complete a wordcount job', function(done){
+
+    appServer.controllerClient.on('job:updated', function(data) {
+
+      if (data.status === 'COMPLETED') {
+        expect(data.result['the']).to.eql(11);
+        expect(data.result['dedicated']).to.eql(4);
+        expect(data.result['this']).to.eql(4);
+        expect(data.result['score']).to.eql(1);
+        done();
+      }
+    });
+
+    appServer.controllerClient.emit('frontend:register');
+    appServer.controllerClient.emit('job:new', {
+      inputUrl: gettysburgUrl,
+      mapFunction: WORDCOUNT_MAP_FUNCTION,
+      reduceFunction: WORDCOUNT_REDUCE_FUNCTION
     });
 
   });
