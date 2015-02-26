@@ -3,6 +3,9 @@ DEBUG=nmr:*
 start:
 	./start.sh
 
+verbose-test:
+	DEBUG=nmr:* ./node_modules/.bin/mocha --reporter list
+
 test:
 	./node_modules/.bin/mocha --reporter list
 
