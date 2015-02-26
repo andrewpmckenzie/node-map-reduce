@@ -100,6 +100,120 @@ describe('App', function(){
 
   });
 
+  it('should report mapper stats and balance loads between mappers', function(done){
+
+    var mapper1Data;
+    var mapper2Data;
+
+    appServer.mapper1Client.on('job:updated', function(data) { mapper1Data = data; });
+    appServer.mapper2Client.on('job:updated', function(data) { mapper2Data = data; });
+
+    appServer.controllerClient.on('job:updated', function(data) {
+
+      if (data.status === 'COMPLETED') {
+        var mapper1Count = mapper1Data.stats.mapped;
+        var mapper2Count = mapper2Data.stats.mapped;
+
+        expect(mapper1Count + mapper2Count).to.eql(25);
+        expect(mapper1Count).to.be.greaterThan(10);
+        expect(mapper2Count).to.be.greaterThan(10);
+
+        expect(mapper1Data.status).to.equal('FINISHED');
+        expect(mapper2Data.status).to.equal('FINISHED');
+
+        expect(mapper1Data.runTime).to.be.greaterThan(50);
+        expect(mapper2Data.runTime).to.be.greaterThan(50);
+
+        done();
+      }
+    });
+
+    appServer.controllerClient.emit('frontend:register');
+    appServer.mapper1Client.emit('frontend:register');
+    appServer.mapper2Client.emit('frontend:register');
+
+    appServer.controllerClient.emit('job:new', {
+      inputUrl: gettysburgUrl,
+      mapFunction: LINECOUNT_MAP_FUNCTION,
+      reduceFunction: LINECOUNT_REDUCE_FUNCTION
+    });
+
+  });
+
+  it('should report reducer stats and partition consistently to a reducer', function(done){
+
+    var reducer1Data;
+    var reducer2Data;
+
+    appServer.reducer1Client.on('job:updated', function(data) { reducer1Data = data; });
+    appServer.reducer2Client.on('job:updated', function(data) { reducer2Data = data; });
+
+    appServer.controllerClient.on('job:updated', function(data) {
+
+      if (data.status === 'COMPLETED') {
+        var reducer1Count = reducer1Data.stats.reduced;
+        var reducer2Count = reducer2Data.stats.reduced;
+
+        // We only have one key ('count'), so only a single reducer should be used.
+        expect(Math.min(reducer1Count, reducer2Count)).to.equal(0);
+        expect(Math.max(reducer1Count, reducer2Count)).to.equal(25);
+
+        expect(reducer1Data.status).to.equal('FINISHED');
+        expect(reducer2Data.status).to.equal('FINISHED');
+
+        expect(reducer1Data.runTime).to.be.greaterThan(50);
+        expect(reducer2Data.runTime).to.be.greaterThan(50);
+
+        done();
+      }
+    });
+
+    appServer.controllerClient.emit('frontend:register');
+    appServer.reducer1Client.emit('frontend:register');
+    appServer.reducer2Client.emit('frontend:register');
+
+    appServer.controllerClient.emit('job:new', {
+      inputUrl: gettysburgUrl,
+      mapFunction: LINECOUNT_MAP_FUNCTION,
+      reduceFunction: LINECOUNT_REDUCE_FUNCTION
+    });
+
+  });
+
+  it('should balance loads between reducers', function(done){
+
+    var reducer1Data;
+    var reducer2Data;
+
+    appServer.reducer1Client.on('job:updated', function(data) { reducer1Data = data; });
+    appServer.reducer2Client.on('job:updated', function(data) { reducer2Data = data; });
+
+    appServer.controllerClient.on('job:updated', function(data) {
+
+      if (data.status === 'COMPLETED') {
+        var reducer1Count = reducer1Data.stats.reduced;
+        var reducer2Count = reducer2Data.stats.reduced;
+
+        expect(reducer1Count + reducer2Count).to.equal(275);
+        expect(reducer1Count).to.be.greaterThan(125);
+        expect(reducer2Count).to.be.greaterThan(125);
+
+        done();
+      }
+    });
+
+    appServer.controllerClient.emit('frontend:register');
+    appServer.reducer1Client.emit('frontend:register');
+    appServer.reducer2Client.emit('frontend:register');
+
+    appServer.controllerClient.emit('job:new', {
+      inputUrl: gettysburgUrl,
+      mapFunction: WORDCOUNT_MAP_FUNCTION,
+      reduceFunction: WORDCOUNT_REDUCE_FUNCTION
+    });
+
+  });
+
   it('should report mapper errors', function(done){
 
     var ERRORING_MAP_FUNCTION = function(line) {

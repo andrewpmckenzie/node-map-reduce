@@ -25,7 +25,7 @@ var Job = JobBase.extend({
   },
 
   toJson: function() {
-    return _.extend(Job.super_.prototype.toJson.call(this), {
+    return _.extend(JobBase.prototype.toJson.call(this), {
       mapFunction: this.mapFunction_
     });
   },

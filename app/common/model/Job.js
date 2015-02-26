@@ -7,7 +7,6 @@ var Job = Model.extend({
   constructor: function(id) {
     Job.super_.call(this, id);
 
-    this.stats_ = {};
     this.finished_ = false;
     this.startTime_ = +new Date();
     this.endTime_ = null;
@@ -16,8 +15,8 @@ var Job = Model.extend({
   },
 
   toJson: function() {
-    return _.extend(Job.super_.prototype.toJson.call(this), {
-      stats: this.stats_,
+    return _.extend(Model.prototype.toJson.call(this), {
+      stats: this.generateStats(),
       runningTime: !this.endTime_ ? (+new Date()) - this.startTime_ : null,
       runTime: this.endTime_ ? this.endTime_ - this.startTime_ : null,
       status: this.finished_ ? 'FINISHED' : 'RUNNING'
@@ -52,7 +51,6 @@ var Job = Model.extend({
   update: function() { this.emit('update'); },
 
   pollForStats_: function() {
-    this.stats_ = this.generateStats();
     this.update();
 
     if (!this.finished_) {

@@ -77,7 +77,7 @@ var Job = JobBase.extend({
 
     if (!didError) {
       this.results_[key] = result;
-      this.reducedCount_++;
+      this.reducedCount_ += values.length;
     }
   },
 
