@@ -1,4 +1,4 @@
-Template.allJobs.helpers({
+Template.jobList.helpers({
   jobs: function () {
     var jobMap = {};
     Jobs.find().forEach(function(job) {
@@ -15,7 +15,7 @@ Template.allJobs.helpers({
   }
 });
 
-Template.allJobs.events({
+Template.jobList.events({
   'click .viewResult': function(event, template) {
     $(template.find('.resultContainer')).addClass('showResult');
     return false;

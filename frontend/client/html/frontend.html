@@ -3,64 +3,55 @@
 </head>
 
 <body>
-  {{> allJobs }}
+  <div class="page-header text-center">
+    <div class="container">
+      <h1>
+        <span class="mapIcon hidden-xs"></span>
+        <span class="char map">M</span><span class="char reduce">R</span>
+        <span class="reduceIcon hidden-xs"></span>
+      </h1>
+    </div>
+  </div>
+
+  <div class="well well-lg">
+    <div class="container text-center">
+      <span class="btn btn-primary btn-lg">Create Job</span>
+    </div>
+  </div>
+
+  <div class="container">
+    {{> jobList }}
+  </div>
+
+  <div class="page-footer text-center">
+    <div class="container">
+      <small>
+        Styles by <a href="http://getbootstrap.com/">Bootstrap</a> + <a href="http://bootswatch.com/cosmo/">Bootswatch</a>.
+        Icons by <a href="http://thenounproject.com/DmitryBaranovskiy/collection/flow/">Dmitry Baranovskiy</a>.
+      </small>
+    </div>
+  </div>
 </body>
 
-<template name="allJobs">
-  {{#each jobs}}
-    <div class="job">
-      {{#each asArray controller}}
-        <div><b>Id:</b> {{v.id}}</div>
-        <div><b>Status:</b> {{v.status}}</div>
-        <div><b>Input:</b> {{v.options.inputUrl}}</div>
-        <div><b>Map:</b> <code>{{v.options.mapFunction}}</code></div>
-        <div><b>Reduce:</b> <code>{{v.options.reduceFunction}}</code></div>
-        {{#if v.error}}
-          <div><b>Error:</b> {{v.error}}</div>
-        {{/if}}
-        {{#if v.runTime}}
-          <div><b>Run time:</b> {{v.runTime}}</div>
-        {{/if}}
-        {{#if v.result}}
-          <div class="resultContainer">
-            <a class="viewResult" href="#">View Result</a>
-            <div class="result">
-              <b>Result:</b> {{asJson v.result}} <br>
-              <a class="hideResult" href="#">Hide Result</a>
-            </div>
-          </div>
-        {{/if}}
+<template name="jobList">
+  <table class="jobList table table-striped table-hover">
+    <thead>
+      <tr>
+        <th>Id</th>
+        <th>Status</th>
+        <th>Input</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each jobs}}
+        <tr>
+          {{#each asArray controller}}
+            <td>{{v.id}}</td>
+            <td>{{v.status}}</td>
+            <td>{{v.options.inputUrl}}</td>
+          {{/each}}
+        </tr>
       {{/each}}
-
-      <br>
-
-      <table>
-        {{#each asArray mapper}}
-          <tr>
-            <td>MAPPER</td>
-            <td>{{k}}</td>
-            <td>{{v.status}}</td>
-            <td>{{asJson v.stats}}</td>
-          </tr>
-        {{/each}}
-        {{#each asArray partitioner}}
-          <tr>
-            <td>PARTITIONER</td>
-            <td>{{k}}</td>
-            <td>{{v.status}}</td>
-            <td>{{asJson v.stats}}</td>
-          </tr>
-        {{/each}}
-        {{#each asArray reducer}}
-          <tr>
-            <td>REDUCER</td>
-            <td>{{k}}</td>
-            <td>{{v.status}}</td>
-            <td>{{asJson v.stats}}</td>
-          </tr>
-        {{/each}}
-      </table>
-    </div>
-    <hr>
-  {{/each}}
+    </tbody>
+  </table>
 </template>
