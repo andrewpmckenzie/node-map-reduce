@@ -1,0 +1,22 @@
+<template name="jobList">
+  <table class="jobList table table-striped table-hover">
+    <thead>
+    <tr>
+      <th>Id</th>
+      <th>Status</th>
+      <th>Input</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{#each jobs}}
+      <tr>
+        {{#each asArray controller}}
+          <td>{{v.id}}</td>
+          <td>{{v.status}}</td>
+          <td>{{v.options.inputUrl}}</td>
+        {{/each}}
+      </tr>
+    {{/each}}
+    </tbody>
+  </table>
+</template>
