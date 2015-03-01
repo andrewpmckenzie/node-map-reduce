@@ -8,6 +8,8 @@ var PartitionerRegistry = require('./helper/PartitionerRegistry');
 var Partitioner = require('./model/Partitioner');
 var ReducerRegistry = require('./helper/ReducerRegistry');
 var Reducer = require('./model/Reducer');
+var UrlInputReader = require('./helper/UrlInputReader');
+var _ = require('lodash');
 
 var ControllerApp = App.extend({
   logName: 'nmr:controller:ControllerApp',
@@ -134,9 +136,34 @@ var ControllerApp = App.extend({
     this.log('newFrontend_(socket, %o) called.', options);
     var frontendClient = ControllerApp.super_.prototype.newFrontend_.call(this, socket, options);
 
+    this.ioEndpoint(socket, 'frontend:get-test-input', ['url', 'numberOfChunks', 'delimiter'], this.getTestInput_.bind(this));
+
     this.partitionerRegistry_.getAll().forEach(function(partitioner) { frontendClient.registerPartitioner(partitioner); });
     this.mapperRegistry_.getAll().forEach(function(mapper) { frontendClient.registerMapper(mapper); });
     this.reducerRegistry_.getAll().forEach(function(reducer) { frontendClient.registerReducer(reducer); });
+  },
+
+  getTestInput_: function(options, callback) {
+    this.log('getTestInput_(%o, [%s]) called.', options, typeof callback);
+    var numberOfChunks = options.numberOfChunks;
+    var urlInputReader = new UrlInputReader(options.url, options.delimiter);
+    var allChunks = [];
+    var done = _.once(function() {
+      this.log('Got test input.');
+      var chunks = _.take(allChunks, numberOfChunks);
+      callback(chunks);
+      urlInputReader.stop();
+    }.bind(this));
+
+    urlInputReader.onChunks(function(chunks) {
+      allChunks = allChunks.concat(chunks);
+      if (allChunks.length >= numberOfChunks) {
+        done();
+      }
+    }.bind(this));
+    urlInputReader.onDone(done);
+
+    urlInputReader.read();
   }
 });
 

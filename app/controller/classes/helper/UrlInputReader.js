@@ -10,6 +10,7 @@ var UrlInputReader = function(url, delimiter) {
   this.doneHandlers_ = [];
   this.errorHandlers_ = [];
 
+  this.connection_ = null;
   this.response_ = null;
   this.partialChunk_ = '';
   this.isPaused_ = false;
@@ -24,12 +25,13 @@ UrlInputReader.prototype = {
 
   read: function() {
     log('read() called.');
-    (/^https:\/\//.test(this.url_) ? https : http).get(this.url_, function(response) {
+    this.connection_ = (/^https:\/\//.test(this.url_) ? https : http).get(this.url_, function(response) {
       response.setEncoding('utf8');
       response.on('data', this.handleData_.bind(this));
       response.on('end', this.handleClose_.bind(this));
       this.response_ = response;
-    }.bind(this)).on('error', this.handleError_.bind(this));
+    }.bind(this));
+    this.connection_.on('error', this.handleError_.bind(this));
   },
 
   pause: function() {
@@ -48,8 +50,16 @@ UrlInputReader.prototype = {
     }
   },
 
+  stop: function() {
+    log('stop() called.');
+    if (this.connection_) {
+      this.connection_.abort();
+    }
+  },
+
   handleClose_: function() {
     log('handleClose_() called.');
+    this.connection_ = null;
     this.response_ = null;
     var finalChunk = [this.partialChunk_];
     this.partialChunk_ = [];
