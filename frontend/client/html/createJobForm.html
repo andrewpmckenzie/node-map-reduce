@@ -13,7 +13,11 @@
                 class="editor form-control panel-body"
                 required
 >function(line) {
-  return { count: 1 };
+  var letters = {};
+  line.toLowerCase().split('').forEach(function(letter) {
+    letters[letter] = (letters[letter] || 0) + 1;
+  });
+  return letters;
 }</textarea>
           </div>
         </div>
@@ -31,7 +35,9 @@
                 class="editor form-control panel-body"
                 required
 >function(memo, newValues) {
-  return (memo || 0) + newValues.length;
+  return newValues.reduce(function(m, v) {
+    return m + v;
+  }, (memo || 0));
 }</textarea>
           </div>
         </div>
@@ -52,7 +58,7 @@
       <div class="col-sm-3"></div>
 
       <div class="col-sm-2">
-        <button class="submit btn btn-primary btn-block margin-bottom">Test</button>
+        <button type="submit" class="test btn btn-primary btn-block margin-bottom">Test</button>
       </div>
 
       <div class="col-sm-2">
@@ -64,8 +70,80 @@
       </div>
 
       <div class="col-sm-3"></div>
-
     </div>
+
+    {{#with testResults}}
+      <hr>
+
+      <div class="testResults row margin-bottom">
+
+        <div class="col-sm-6">
+          <div class="panel {{#if hasMapError}}panel-danger{{else}}panel-success{{/if}} margin-bottom">
+            <div class="panel-heading"><strong>Mapper</strong></div>
+
+            <div class="panel-body text-left">
+              {{#with mapEvalError}}<div class="text-danger">{{this}}</div>{{/with}}
+
+              {{#with mapResults}}
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Line</th>
+                      <th>Result</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{#each this}}
+                      <tr>
+                        <td>{{input}}</td>
+                        <td class="{{#if error}}text-danger{{else}}text-success{{/if}}">
+                          {{error}}<div class="result">{{asJson result}}</div>
+                        </td>
+                      </tr>
+                    {{/each}}
+                  </tbody>
+                </table>
+              {{/with}}
+
+            </div>
+          </div>
+        </div>
+
+        <div class="col-sm-6">
+          <div class="panel {{#if hasReduceError}}panel-danger{{else}}panel-success{{/if}} margin-bottom">
+            <div class="panel-heading"><strong>Reducer</strong></div>
+
+            <div class="panel-body text-left">
+              {{#with reduceEvalError}}<div class="text-danger">{{this}}</div>{{/with}}
+
+              {{#with reduceResults}}
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Key</th>
+                      <th>Values</th>
+                      <th>Result</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{#each this}}
+                      <tr>
+                        <td>{{asJson key}}</td>
+                        <td>{{asJson values}}</td>
+                        <td class="{{#if error}}text-danger{{else}}text-success{{/if}}">
+                          {{error}}<div class="result">{{asJson result}}</div>
+                        </td>
+                      </tr>
+                    {{/each}}
+                  </tbody>
+                </table>
+              {{/with}}
+            </div>
+          </div>
+        </div>
+
+      </div>
+    {{/with}}
 
   </form>
 </template>

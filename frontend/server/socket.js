@@ -62,4 +62,22 @@ Meteor.startup(function () {
   };
 
   registerController('http://localhost:3010');
+
+  var getTestInputAsync = function(url, numberOfChunks, cb) {
+    controllerSocket.emit('frontend:get-test-input', {
+      url: url,
+      numberOfChunks: numberOfChunks,
+      delimiter: '\n'
+    }, function(data) { cb(null, data); })
+  };
+
+  Meteor.methods({
+    getTestInput: function(url, numberOfChunks) {
+      return Meteor.wrapAsync(getTestInputAsync)(url, numberOfChunks);
+    },
+
+    createJob: function(url, mapFunction, reduceFunction) {
+
+    }
+  });
 });

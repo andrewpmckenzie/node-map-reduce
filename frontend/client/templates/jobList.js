@@ -14,15 +14,3 @@ Template.jobList.helpers({
     return this.data;
   }
 });
-
-Template.jobList.events({
-  'click .viewResult': function(event, template) {
-    $(template.find('.resultContainer')).addClass('showResult');
-    return false;
-  },
-
-  'click .hideResult': function(event, template) {
-    $(template.find('.resultContainer')).removeClass('showResult');
-    return false;
-  }
-});

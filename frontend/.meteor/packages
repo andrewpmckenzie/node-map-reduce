@@ -10,3 +10,4 @@ insecure
 less
 joncursi:socket-io-client
 nemo64:bootstrap
+reactive-var
