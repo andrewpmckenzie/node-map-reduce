@@ -62,7 +62,7 @@ var Job = JobBase.extend({
     return _.extend(Job.super_.prototype.toJson.call(this), {
       status: this.status_,
       error: this.error_,
-      result: this.result_,
+      result: _.pairs(this.result_), // jic there's some values that don't make for good keys
       runTime: this.runTime_,
       options: {
         inputUrl: this.inputUrl_,
