@@ -88,7 +88,7 @@ Template.createJobForm.events({
       });
     } else {
       Meteor.call('createJob', data.inputUrl, data.mapFunction, data.reduceFunction, function(error, result) {
-        // TODO
+        Session.set('actionSectionTemplate', 'actionSectionButtons');
       });
     }
 

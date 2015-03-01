@@ -76,8 +76,12 @@ Meteor.startup(function () {
       return Meteor.wrapAsync(getTestInputAsync)(url, numberOfChunks);
     },
 
-    createJob: function(url, mapFunction, reduceFunction) {
-
+    createJob: function(inputUrl, mapFunction, reduceFunction) {
+      controllerSocket.emit('job:new', {
+        inputUrl: inputUrl,
+        mapFunction: mapFunction,
+        reduceFunction: reduceFunction
+      });
     }
   });
 });
