@@ -7,6 +7,12 @@ Meteor.startup(function () {
   var addOrUpdateJob = function (jobDetails, serverType, address) {
     var jobId = jobDetails.id;
     var id = serverType + ':' + address + ':' + jobId;
+
+    if (jobDetails.result) {
+      // Mongo doesn't like certain keys (e.g. '.')
+      jobDetails.result = _.pairs(jobDetails.result);
+    }
+
     var payload = {
       id: id,
       jobId: jobId,
