@@ -1,0 +1,26 @@
+<template name="job">
+  <div id="jobPage">
+    {{> chrome_nav}}
+
+    <div class="container">
+      <h1>Job #{{id}}</h1>
+      {{#with results}}
+        <h2>Results</h2>
+        {{> job_resultList this}}
+      {{/with}}
+    </div>
+
+    {{> chrome_footer}}
+  </div>
+</template>
+
+<template name="job_resultList">
+  <div class="row">
+    {{#each this}}
+      <span class="resultEntry">
+              <span class="key">{{asJson k true}}</span><span class="value">{{v}}</span>
+            </span>
+    {{/each}}
+  </div>
+  <style scoped>.resultEntry { width: {{resultWidth}}px; }</style>
+</template>

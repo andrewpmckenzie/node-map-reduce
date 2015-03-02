@@ -1,5 +1,6 @@
-Template.registerHelper('asJson', function(obj) {
-  return obj ? JSON.stringify(obj, null, '\t') : '';
+Template.registerHelper('asJson', function(obj, trimQuotes) {
+  var result = obj ? JSON.stringify(obj, null, '\t') : '';
+  return trimQuotes ? result.replace(/^"(.+)"$/g, '$1') : result;
 });
 
 Template.registerHelper('asArray', function(obj) {
