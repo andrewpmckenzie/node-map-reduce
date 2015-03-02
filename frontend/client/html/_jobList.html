@@ -9,14 +9,16 @@
     </thead>
     <tbody>
     {{#each jobs}}
-      <tr>
-        {{#each asArray controller}}
-          <td>{{v.id}}</td>
-          <td>{{v.status}}</td>
-          <td>{{v.options.inputUrl}}</td>
-        {{/each}}
-      </tr>
+      {{>jobList_item this}}
     {{/each}}
     </tbody>
   </table>
+</template>
+
+<template name="jobList_item">
+  <tr>
+      <td>{{controller.id}}</td>
+      <td>{{controller.status}}</td>
+      <td>{{controller.options.inputUrl}}</td>
+  </tr>
 </template>

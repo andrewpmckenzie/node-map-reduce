@@ -1,37 +1,25 @@
-<head>
-  <script src="/js/third_party/jquery.min.js"></script>
-  <script src="/js/third_party/codemirror.js"></script>
-  <script src="/js/third_party/codemirror-javascript.js"></script>
-  <link rel="stylesheet" href="/css/codemirror.css" />
-</head>
+<template name="index">
+  <div id="indexPage">
+    <div class="page-header text-center">
+      <div class="container">
+        <h1>
+          <span class="mapIcon hidden-xs"></span>
+          <span class="char map">M</span><span class="char reduce">R</span>
+          <span class="reduceIcon hidden-xs"></span>
+        </h1>
+      </div>
+    </div>
 
-<body>
-  <div class="page-header text-center">
+    <div class="well well-lg">
+      <div class="container text-center">
+        {{> actionSection }}
+      </div>
+    </div>
+
     <div class="container">
-      <h1>
-        <span class="mapIcon hidden-xs"></span>
-        <span class="char map">M</span><span class="char reduce">R</span>
-        <span class="reduceIcon hidden-xs"></span>
-      </h1>
+      {{> jobList }}
     </div>
-  </div>
 
-  <div class="well well-lg">
-    <div class="container text-center">
-      {{> actionSection }}
-    </div>
+    {{> chrome_footer}}
   </div>
-
-  <div class="container">
-    {{> jobList }}
-  </div>
-
-  <div class="page-footer text-center">
-    <div class="container">
-      <small>
-        Styles by <a href="http://getbootstrap.com/">Bootstrap</a> + <a href="http://bootswatch.com/cosmo/">Bootswatch</a>.
-        Icons by <a href="http://thenounproject.com/DmitryBaranovskiy/collection/flow/">Dmitry Baranovskiy</a>.
-      </small>
-    </div>
-  </div>
-</body>
+</template>
